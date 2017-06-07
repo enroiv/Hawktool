@@ -69,7 +69,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		agentManager.initialize();
 	}
 	
-	final void cleanUp() {
+	public final void cleanUp() {
 		agentMonitor.removeErrorExceptionListener(this);
 		agentMonitor.removeAgentMonitorListener(this);
 		agentMonitor.removeMicroAgentListMonitorListener(this);

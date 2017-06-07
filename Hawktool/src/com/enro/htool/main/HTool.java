@@ -158,6 +158,10 @@ public class HTool
     	return true;
     	
     } 
+    
+    public void cleanup(){
+    	console.cleanUp();
+    }
 
 	public static void main(String a[]) {
         System.out.println("HTool");
