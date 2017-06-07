@@ -1,5 +1,6 @@
 package com.enro.htool.main;
 
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -11,6 +12,7 @@ import COM.TIBCO.hawk.console.hawkeye.AgentManager;
 import COM.TIBCO.hawk.console.hawkeye.AgentMonitor;
 import COM.TIBCO.hawk.console.hawkeye.AgentMonitorEvent;
 import COM.TIBCO.hawk.console.hawkeye.AgentMonitorListener;
+import COM.TIBCO.hawk.console.hawkeye.ConsoleInitializationException;
 import COM.TIBCO.hawk.console.hawkeye.ErrorExceptionEvent;
 import COM.TIBCO.hawk.console.hawkeye.ErrorExceptionListener;
 import COM.TIBCO.hawk.console.hawkeye.MicroAgentListMonitorEvent;
@@ -25,31 +27,39 @@ import COM.TIBCO.hawk.talon.MicroAgentID;
 public class HToolConsole implements AgentMonitorListener,
 MicroAgentListMonitorListener, ErrorExceptionListener{
 	
+	private boolean isInitialized = false;
 	private TIBHawkConsole console;
 	private AgentMonitor agentMonitor;
 	private AgentManager agentManager;
 	
+	private Properties props;
 	private String agentName;
 	
 	private Map<String,Map<String,MicroAgentID>> agentDetail = new HashMap<String,Map<String,MicroAgentID>>();
 	
 	private static final boolean DEBUG = false;
 	
-	public HToolConsole(Properties props) throws Exception{
+	public HToolConsole(Properties prps) throws Exception{
 		
-		String agentNm = props.getProperty("agent_name");
+		String agentNm = prps.getProperty("agent_name");
 		
 		// if agent name is not specified use the local host name
 		if (agentNm == null) {
 			try {
 				java.net.InetAddress hostInetInfo = java.net.InetAddress.getLocalHost();
 				agentNm = hostInetInfo.getHostName();
-				props.put("agent_name", agentNm);
+				prps.put("agent_name", agentNm);
 			} catch (java.net.UnknownHostException uhe) {}
 		}
 		
 		agentName = agentNm;
-
+		props = prps;
+		
+		initialize();
+		
+	}
+	
+	public void initialize() throws Exception{
 		// Create the TIBHawkConsole Instance
 		console = TIBHawkConsoleFactory.getInstance().createHawkConsole(props);
 
@@ -67,6 +77,12 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 
 		agentMonitor.initialize();
 		agentManager.initialize();
+		
+		isInitialized = true;
+	}
+	
+	public boolean isInit(){
+		return isInitialized;
 	}
 	
 	public final void cleanUp() {
@@ -77,7 +93,8 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		agentMonitor.shutdown();
 		agentManager.shutdown();
 
-		System.exit(0);
+		console = null;
+		isInitialized = false;
 	}
 	
 	public String getAgentName() {
