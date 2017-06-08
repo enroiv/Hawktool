@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.enro.bwutils.BWUtils;
 import com.enro.htool.common.HToolConstants;
@@ -16,6 +19,7 @@ import COM.TIBCO.hawk.config.rbengine.rulebase.Rulebase;
 import COM.TIBCO.hawk.config.rbengine.rulebase.RulebaseXML;
 import COM.TIBCO.hawk.talon.DataElement;
 import COM.TIBCO.hawk.talon.MethodInvocation;
+import COM.TIBCO.hawk.talon.MicroAgentData;
 import COM.TIBCO.hawk.talon.MicroAgentID;
 
 public class HTool
@@ -25,8 +29,16 @@ public class HTool
 	private static final long serialVersionUID = 0xede48a6b44b76df8L;
     private HToolConsole console;
     private Map<String,MicroAgentID> domainMicroAgentIDMap = null;
+    
+    private final static Logger logger = Logger.getLogger(HTool.class.getName());
 
-    public HTool(){
+    public HTool(Properties props){
+    	try {
+			console = new HToolConsole(props);
+		} catch (Exception e) {
+			e.printStackTrace();
+			console = null;
+		}
     }
     
     public HTool(String hawkTransportParams[]){
@@ -43,16 +55,18 @@ public class HTool
     	Map<String,Map<String,MicroAgentID>> ad = console.getAgentDetails();
     	Map<String,MicroAgentID> domMaids = null;
     	
-    	while(null == domMaids){
+    	while(null == ad ){
     		try {
 				Thread.sleep(HToolConstants.INTVL);
-				domMaids = ad.get(console.getAgentName());
-				domainMicroAgentIDMap = domMaids;
+				ad = console.getAgentDetails();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 				return null;
 			}
     	}
+    	
+    	domMaids = ad.get(console.getAgentName());
+		domainMicroAgentIDMap = domMaids;
     	
     	Set<String> allMas = domMaids.keySet();
     	Iterator <String>it = allMas.iterator();
@@ -83,7 +97,7 @@ public class HTool
         return (String[])microAgents.toArray(new String[microAgents.size()]);
     }
     
-    private String ProcessRulebaseTemplate(String domain, String deployment, String component, String template) {
+    private String processRulebaseTemplate(String domain, String deployment, String component, String template) {
     	
     	return BWUtils.strReplace(
     			BWUtils.strReplace(
@@ -106,15 +120,16 @@ public class HTool
 		return null;
 	}
     
-    private boolean pushRulebase(MicroAgentID maid, RulebaseXML rbXml) {
+    private int pushRulebase(MicroAgentID maid, RulebaseXML rbXml) {
 		
-		boolean rslt = false;
+		int rslt = 0;
 		
 		try{
 			DataElement[] dataElements = new DataElement[1];
 			dataElements[0] = new DataElement("RulebaseXML", rbXml);
 			MethodInvocation mi = new MethodInvocation("addRuleBase", dataElements);
-			console.invoke(maid, mi);
+			MicroAgentData mad = console.invoke(maid, mi);
+			rslt = 1;
 		} catch (Exception e){
 			e.printStackTrace();
 		}
@@ -122,13 +137,13 @@ public class HTool
 		return rslt;
 	}
     
-    public boolean ProcessRulebaseTemplates(String domain,String  [] microAgents,String [] templates,String [] templateNames){
+    public int processRulebaseTemplates(String domain,String  [] microAgents,String [] templates,String [] templateNames){
     	
-    	boolean rslt = false;
+    	int rslt = 0;
     	int len = templates.length;
     	
     	if(len != templateNames.length){
-    		System.out.println("Invalid parameters: Rulebase and Rulebase name mismatch");
+    		logger.log(Level.SEVERE,"Invalid parameters: Rulebase and Rulebase name mismatch");
     		return rslt;
     	}
     	
@@ -140,30 +155,27 @@ public class HTool
     		String templateName = templateNames[i];
     		
     		for(String microAgent : microAgents){
+    			
     			String sep = domain + ".";
     	    	String [] depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
     	    	String deployment = depComp[0];
     	    	String component = depComp[1];
     	    	String rulebaseName = BWUtils.strReplace(deployment+"_"+component+"_"+templateName,"\\.[hH][rR][bB]$","");
-    	    	String rulebaseData = ProcessRulebaseTemplate(domain,deployment,component,template);
+    	    	String rulebaseData = processRulebaseTemplate(domain,deployment,component,template);
     	    	RulebaseXML rbXml = getRulebaseXML(rulebaseData, rulebaseName);
     	    	
     	    	if(rbXml != null){
-    	    		pushRulebase(maidRBE,rbXml);
+    	    		rslt += pushRulebase(maidRBE,rbXml);
     	    	}
     	    	
     		}
     	}
     	
-    	return true;
+    	return rslt;
     	
     } 
     
     public void cleanup(){
     	console.cleanUp();
-    }
-
-	public static void main(String a[]) {
-        System.out.println("HTool");
     }
 }

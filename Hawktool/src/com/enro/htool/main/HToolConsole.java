@@ -1,9 +1,10 @@
 package com.enro.htool.main;
 
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import com.enro.htool.common.HToolConstants;
 
@@ -12,7 +13,6 @@ import COM.TIBCO.hawk.console.hawkeye.AgentManager;
 import COM.TIBCO.hawk.console.hawkeye.AgentMonitor;
 import COM.TIBCO.hawk.console.hawkeye.AgentMonitorEvent;
 import COM.TIBCO.hawk.console.hawkeye.AgentMonitorListener;
-import COM.TIBCO.hawk.console.hawkeye.ConsoleInitializationException;
 import COM.TIBCO.hawk.console.hawkeye.ErrorExceptionEvent;
 import COM.TIBCO.hawk.console.hawkeye.ErrorExceptionListener;
 import COM.TIBCO.hawk.console.hawkeye.MicroAgentListMonitorEvent;
@@ -27,6 +27,8 @@ import COM.TIBCO.hawk.talon.MicroAgentID;
 public class HToolConsole implements AgentMonitorListener,
 MicroAgentListMonitorListener, ErrorExceptionListener{
 	
+	private final static Logger logger = Logger.getLogger(HToolConsole.class.getName());
+	
 	private boolean isInitialized = false;
 	private TIBHawkConsole console;
 	private AgentMonitor agentMonitor;
@@ -35,9 +37,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	private Properties props;
 	private String agentName;
 	
-	private Map<String,Map<String,MicroAgentID>> agentDetail = new HashMap<String,Map<String,MicroAgentID>>();
-	
-	private static final boolean DEBUG = false;
+	private Map<String,Map<String,MicroAgentID>> agentDetail = null;
 	
 	public HToolConsole(Properties prps) throws Exception{
 		
@@ -55,7 +55,25 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		agentName = agentNm;
 		props = prps;
 		
-		initialize();
+		// Create the TIBHawkConsole Instance
+		console = TIBHawkConsoleFactory.getInstance().createHawkConsole(props);
+
+		agentMonitor = console.getAgentMonitor();
+		agentManager = console.getAgentManager();
+
+		// create and add listener for console errors
+		agentMonitor.addErrorExceptionListener(this);
+
+		// create and add listener for agents
+		agentMonitor.addAgentMonitorListener(this);
+
+		// create and add listener for microagents
+		agentMonitor.addMicroAgentListMonitorListener(this);
+
+		agentMonitor.initialize();
+		agentManager.initialize();
+		
+		isInitialized = true;
 		
 	}
 	
@@ -126,17 +144,18 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		
 		if (!ai.getAgentID().getName().equals(agentName)){
 			//TODO: Process other agents
-			println("Found external agent: " + agentName);
+			logger.log(Level.INFO,"Found external agent: " + agentName);
 		} else{
 			//TODO: Process local agent
-			println("Found agent: " + agentName);
+			logger.log(Level.INFO,"Found agent: " + agentName);
 		}
 		
 		for(MicroAgentID mID : mIDs){
-			
-			log("addMicroagent:  " + mID.getAgent().getName() + ":" + mID.getName());
 			maidDtl.put(mID.getName(),mID);
-			
+		}
+		
+		if(null == agentDetail){
+			agentDetail = new HashMap<String,Map<String,MicroAgentID>>();
 		}
 		
 		agentDetail.put(ai.getAgentID().getName(), maidDtl);
@@ -144,7 +163,6 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	
 	void removeMicroagent(MicroAgentID mID) {
 		String agNm = mID.getAgent().getName();
-		log("removeMicroagent:  " + agNm + ":" + mID.getName());
 		Map<String,MicroAgentID> maidDtl = agentDetail.get(agNm);
 		maidDtl.remove(mID.getName());
 		agentDetail.put(agNm, maidDtl);
@@ -153,25 +171,20 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	/*AgentMonitorListener methods */
 	@Override
 	public synchronized void onAgentAlive(AgentMonitorEvent event) {
-		
-		println("onAgentAlive");
-		
 		AgentInstance agntInst = event.getAgentInstance();
+		logger.log(Level.INFO,agntInst.getAgentID().getName() + " was found");
 		addMicroagent(agntInst,agntInst.getStatusMicroAgents());		
 	}
-
-	
 
 	@Override
 	public synchronized void onAgentExpired(AgentMonitorEvent event) {
 		
-		println("onAgentExpired");
-		
 		AgentInstance agntInst = event.getAgentInstance();
+		
+		logger.log(Level.INFO,agntInst.getAgentID().getName() + " has expired");
 
 		if (!agntInst.getAgentID().getName().equals(agentName))
 			return;
-		println("Loosing agent: " + agentName);
 
 		MicroAgentID[] mIDs = agntInst.getStatusMicroAgents();
 		for (int i = 0; i < mIDs.length; i++) {
@@ -182,15 +195,12 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	/* MicroAgentListMonitorListener methods */
 	@Override
 	public synchronized void onMicroAgentAdded(MicroAgentListMonitorEvent event) {
-		println("onMicroAgentAdded");
-		
 		MicroAgentID [] mIDs = {event.getMicroAgentID()};
 		addMicroagent(event.getAgentInstance(),mIDs);
 	}
 
 	@Override
 	public synchronized void onMicroAgentRemoved(MicroAgentListMonitorEvent event) {
-		println("onMicroAgentRemoved");
 		MicroAgentID mID = event.getMicroAgentID();
 		removeMicroagent(mID);
 	}	
@@ -198,17 +208,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	/*ErrorExceptionListener methods */
 	@Override
 	public synchronized void onErrorExceptionEvent(ErrorExceptionEvent event) {
-		println("onErrorExceptionEvent: event=" + event);
-	}
-	
-	void println(String s) {
-		System.out.println(s);
-	}
-	
-	void log(String s) {
-		if (!DEBUG)
-			return;
-		System.out.println(s);
+		logger.log(Level.SEVERE,"onErrorExceptionEvent: event=" + event);
 	}
 	
 }

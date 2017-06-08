@@ -1,10 +1,14 @@
 package com.enro.htool.test;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import com.enro.htool.common.HToolConstants;
 import com.enro.htool.main.HTool;
 
-public class HToolTest
-{
+public class HToolTest{
+	
+	private final static Logger logger = Logger.getLogger(HToolTest.class.getName());
 
     public HToolTest()
     {
@@ -25,8 +29,8 @@ public class HToolTest
         String [] nm = {"SampleMemRB.hrb"};
         String [] ma = hTool.getMAgents(microagents);
         
-        hTool.ProcessRulebaseTemplates("bw-demo-domain", ma,rb,nm);
-        System.out.println("done");
+        logger.log(Level.FINE,hTool.processRulebaseTemplates("bw-demo-domain", ma,rb,nm)+
+        		" rulebases were sent to Hawk agents in the domain");
         
     }
 }
