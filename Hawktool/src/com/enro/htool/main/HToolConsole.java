@@ -153,6 +153,10 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		
 		for(MicroAgentID mID : mIDs){
 			maidDtl.put(mID.getName(),mID);
+			
+			if(mID.getName()==HToolConstants.REMANM){
+				System.out.println("Adding "+mID.getName()+ " to " + aiNm);
+			}
 		}
 		
 		if(null == agentDetail){
