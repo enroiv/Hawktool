@@ -135,7 +135,7 @@ public class HTool
 			
 			logger.log(Level.INFO, "Configuring XML for rulebase " + rulebaseName);
 			System.out.println("Configuring XML for rulebase " + rulebaseName);
-			rb.setName(rulebaseName);
+			rb.setName(BWUtils.strReplace(rulebaseName,"\\s", "_"));
 			
 			System.out.println("XML data is\n " + rulebaseData);
 			logger.log(Level.INFO,"XML data is\n " + rulebaseData);
