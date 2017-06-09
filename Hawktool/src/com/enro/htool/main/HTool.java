@@ -33,8 +33,8 @@ public class HTool
     private Map<String,MicroAgentID> domainMicroAgentIDMap = null;
     
     private final static Logger logger = Logger.getLogger(HTool.class.getName());
-
-    public HTool(Properties props){
+    
+    private void init(Properties props){
     	try {
     		Hashtable <String,String> sslProps = HToolUtil.processSSLProperties(props);
     		
@@ -47,14 +47,13 @@ public class HTool
 			console = null;
 		}
     }
+
+    public HTool(Properties props){
+    	init(props);
+    }
     
     public HTool(String hawkTransportParams[]){
-    	try {
-			console = new HToolConsole(HToolUtil.getProps(hawkTransportParams));
-		} catch (Exception e) {
-			e.printStackTrace();
-			console = null;
-		}
+    	init(HToolUtil.getProps(hawkTransportParams));
     }  
     
     public String [] getMAgents(String mAgents[]){
