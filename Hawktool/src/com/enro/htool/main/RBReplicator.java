@@ -135,6 +135,11 @@ public class RBReplicator {
 		String microagents[] = {HToolConstants.BWMANM};
         String [] ma = hTool.getMAgents(microagents);
         
+        if(a.length == 3){
+        	showMA(ma);
+        	System.exit(0);
+        }
+        
         Set<Entry<String,String>> eSet = templates.entrySet();
         Iterator<Entry<String, String>> it = eSet.iterator();
         List<String> allKeys = new ArrayList<String>();
@@ -154,5 +159,11 @@ public class RBReplicator {
         
         hTool.cleanup();
 		
+	}
+
+	private static void showMA(String[] mas) {
+		for(String ma : mas){
+			logger.log(Level.INFO,"Found MicroAgent: " + ma);
+		}
 	}
 }
