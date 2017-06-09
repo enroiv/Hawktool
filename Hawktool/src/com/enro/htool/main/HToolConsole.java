@@ -147,7 +147,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			logger.log(Level.INFO,"Found external agent: " + agentName);
 		} else{
 			//TODO: Process local agent
-			logger.log(Level.INFO,"Found agent: " + agentName);
+			logger.log(Level.INFO,"Found local agent: " + agentName);
 		}
 		
 		for(MicroAgentID mID : mIDs){

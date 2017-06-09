@@ -11,4 +11,5 @@ public class HToolConstants {
 	public static final String CMPEXP = "%%TIBCO_COMPONENT_INSTANCE%%";
 	
 	public static final int INTVL = 15 * 1000;
+	public static final int NUMAT = 10;
 }

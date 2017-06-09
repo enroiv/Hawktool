@@ -71,26 +71,38 @@ public class HTool
 			}
     	}
     	
-    	domMaids = ad.get(console.getAgentName());
-		domainMicroAgentIDMap = domMaids;
-    	
-    	Set<String> allMas = domMaids.keySet();
-    	Iterator <String>it = allMas.iterator();
-    	List<String> mAgts = new ArrayList<String>();
-    	String requestedMicroAgents[] = getRequestedMicroAgents(mAgents);
-    	
-    	while(it.hasNext()){
-    		String ma = it.next();
-    		
-    		for(String requestedMicroAgent : requestedMicroAgents){
-                if(!ma.contains(requestedMicroAgent)) continue;
-                
-                mAgts.add(ma);
-                break;
-            }
+    	int count = 0;
+    	while(null == domMaids){
+    		try{
+    			domMaids = ad.get(console.getAgentName());
+    			domainMicroAgentIDMap = domMaids;
+    	    	
+    	    	Set<String> allMas = domMaids.keySet();
+    	    	Iterator <String>it = allMas.iterator();
+    	    	List<String> mAgts = new ArrayList<String>();
+    	    	String requestedMicroAgents[] = getRequestedMicroAgents(mAgents);
+    	    	
+    	    	while(it.hasNext()){
+    	    		String ma = it.next();
+    	    		
+    	    		for(String requestedMicroAgent : requestedMicroAgents){
+    	                if(!ma.contains(requestedMicroAgent)) continue;
+    	                
+    	                mAgts.add(ma);
+    	                break;
+    	            }
+    	    	}
+    	    	
+    	    	return mAgts.toArray(new String[mAgts.size()]);
+    	    	
+    		} catch(Exception e){
+    			count+=1;
+    			String msg = console.getAgentName() + " has not responded after " + count + " attempts";
+    			logger.log(Level.WARNING,msg);
+    		}
     	}
-        
-        return mAgts.toArray(new String[mAgts.size()]);
+    	
+    	return null;
     }
     
     private String[] getRequestedMicroAgents(String mAgents[]){
