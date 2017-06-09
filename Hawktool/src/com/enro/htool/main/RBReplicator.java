@@ -24,8 +24,6 @@ import javax.xml.stream.XMLStreamReader;
 import com.enro.bwutils.BWUtils;
 import com.enro.htool.common.HToolConstants;
 
-import COM.TIBCO.hawk.utilities.misc.HawkConstants;
-
 public class RBReplicator {
 	
 	private final static Logger logger = Logger.getLogger(RBReplicator.class.getName());

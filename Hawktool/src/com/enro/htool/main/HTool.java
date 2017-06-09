@@ -202,12 +202,8 @@ public class HTool
     	    		logger.log(Level.WARNING, "Unable to find RuleBase Engine MicroAgent for " + microAgent + ". Skipping...");
     	    		continue;
     	    	}
-    	    	else{
-    	    		System.out.println("RuleBase Engine MicroAgent for " + microAgent + " is in "+maidRBE.getAgent().getName());
-    	    		continue;
-    	    	}
     			
-    			/*String sep = domain + ".";
+    			String sep = domain + ".";
     	    	String [] depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
     	    	String deployment = depComp[0];
     	    	String component = depComp[1];
@@ -217,7 +213,7 @@ public class HTool
     	    	
     	    	if(rbXml != null){
     	    		rslt += pushRulebase(maidRBE,rbXml);
-    	    	}*/
+    	    	}
     	    	
     		}
     	}

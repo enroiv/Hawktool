@@ -146,21 +146,14 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		
 		String aiNm = ai.getAgentID().getName();
 		if (!aiNm.equals(agentName)){
-			//TODO: Process other agents
 			logger.log(Level.INFO,agentName + " found external agent: " + aiNm);
 		} else{
-			//TODO: Process local agent
 			logger.log(Level.INFO,"Found local agent: " + aiNm);
 		}
 		
 		// First pass to get the RulebaseEngine ID for the agent
 		for(MicroAgentID mID : mIDs){
-			if(mID.getName().contentEquals(HToolConstants.REMANM)) {
-				rbeMAID = mID;
-			}
-			else{
-				System.out.println("Found "+mID.getName()+ ", which is not "+HToolConstants.REMANM);
-			}
+			if(mID.getName().contentEquals(HToolConstants.REMANM)) rbeMAID = mID;
 		}
 		
 		// Second pass to fill the MicroAgent ID by name and RBE by name maps
@@ -170,10 +163,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			rbeDetail.put(mNm,rbeMAID);
 		}
 		
-		if(null == agentDetail){
-			agentDetail = new HashMap<String,Map<String,MicroAgentID>>();
-		}
-		
+		if(null == agentDetail) agentDetail = new HashMap<String,Map<String,MicroAgentID>>();
 		agentDetail.put(aiNm, maidDtl);
 	}
 	
