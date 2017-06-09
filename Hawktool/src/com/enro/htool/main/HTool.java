@@ -133,16 +133,17 @@ public class HTool
     	try {
 			Rulebase rb = new Rulebase(new StringReader(rulebaseData));
 			
-			logger.log(Level.INFO, "Configuring XML for rulebase " + rulebaseName);
-			System.out.println("Configuring XML for rulebase " + rulebaseName);
-			rb.setName(BWUtils.strReplace(rulebaseName,"\\s", "_"));
+			// Rulebase name can't contain spaces
+			String nm = BWUtils.strReplace(rulebaseName,"\\s", "_");
 			
-			System.out.println("XML data is\n " + rulebaseData);
-			logger.log(Level.INFO,"XML data is\n " + rulebaseData);
+			logger.log(Level.INFO, "Configuring XML for rulebase " + nm);
+			System.out.println("Configuring XML for rulebase " + nm);
+			rb.setName(nm);
+			
+			logger.log(Level.FINE,"XML data is\n " + rulebaseData);
 			
 			RulebaseXML rbXml = new RulebaseXML(rb);
-			System.out.println("Pocesses XML is\n"+rbXml.getXMLString());
-			logger.log(Level.INFO,"Pocesses XML is\n"+rbXml.getXMLString());
+			logger.log(Level.FINE,"Pocesses XML is\n"+rbXml.getXMLString());
 			
 			return rbXml;
 		} catch (Exception e) {
