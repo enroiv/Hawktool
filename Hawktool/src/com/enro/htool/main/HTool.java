@@ -132,9 +132,10 @@ public class HTool
     private RulebaseXML getRulebaseXML(String rulebaseData, String rulebaseName) {
     	try {
 			Rulebase rb = new Rulebase(new StringReader(rulebaseData));
-			rb.setName(rulebaseName);
 			
 			logger.log(Level.INFO, "Configuring XML for rulebase " + rulebaseName);
+			rb.setName(rulebaseName);
+			
 			logger.log(Level.INFO,"XML data is\n " + rulebaseData);
 			
 			RulebaseXML rbXml = new RulebaseXML(rb);
