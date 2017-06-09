@@ -72,8 +72,12 @@ public class HTool
     	}
     	
     	int count = 0;
-    	while(null == domMaids){
+    	while(null == domMaids && count < HToolConstants.NUMAT){
     		try{
+    			
+    			logger.log(Level.INFO,"Inspecting agent "+console.getAgentName());
+    			
+    			Thread.sleep(HToolConstants.INTVL);
     			domMaids = ad.get(console.getAgentName());
     			domainMicroAgentIDMap = domMaids;
     	    	
