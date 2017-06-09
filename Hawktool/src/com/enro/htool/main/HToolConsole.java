@@ -142,12 +142,13 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		
 		Map<String,MicroAgentID> maidDtl = new HashMap<String,MicroAgentID>();
 		
-		if (!ai.getAgentID().getName().equals(agentName)){
+		String aiNm = ai.getAgentID().getName();
+		if (!aiNm.equals(agentName)){
 			//TODO: Process other agents
-			logger.log(Level.INFO,"Found external agent: " + agentName);
+			logger.log(Level.INFO,agentName + " found external agent: " + aiNm);
 		} else{
 			//TODO: Process local agent
-			logger.log(Level.INFO,"Found local agent: " + agentName);
+			logger.log(Level.INFO,"Found local agent: " + aiNm);
 		}
 		
 		for(MicroAgentID mID : mIDs){
@@ -158,7 +159,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			agentDetail = new HashMap<String,Map<String,MicroAgentID>>();
 		}
 		
-		agentDetail.put(ai.getAgentID().getName(), maidDtl);
+		agentDetail.put(aiNm, maidDtl);
 	}
 	
 	void removeMicroagent(MicroAgentID mID) {
@@ -172,7 +173,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	@Override
 	public synchronized void onAgentAlive(AgentMonitorEvent event) {
 		AgentInstance agntInst = event.getAgentInstance();
-		logger.log(Level.INFO,agntInst.getAgentID().getName() + " was found");
+		logger.log(Level.INFO,"Hawk agent <" + agntInst.getAgentID().getName() + "> was found");
 		addMicroagent(agntInst,agntInst.getStatusMicroAgents());		
 	}
 

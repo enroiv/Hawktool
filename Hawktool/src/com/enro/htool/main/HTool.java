@@ -7,6 +7,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Level;
@@ -20,7 +21,6 @@ import COM.TIBCO.hawk.config.rbengine.rulebase.Rulebase;
 import COM.TIBCO.hawk.config.rbengine.rulebase.RulebaseXML;
 import COM.TIBCO.hawk.talon.DataElement;
 import COM.TIBCO.hawk.talon.MethodInvocation;
-import COM.TIBCO.hawk.talon.MicroAgentData;
 import COM.TIBCO.hawk.talon.MicroAgentID;
 import COM.TIBCO.hawk.utilities.misc.HawkConstants;
 
@@ -75,10 +75,19 @@ public class HTool
     	while(null == domMaids && count < HToolConstants.NUMAT){
     		try{
     			
-    			logger.log(Level.INFO,"Inspecting agent "+console.getAgentName());
-    			
     			Thread.sleep(HToolConstants.INTVL);
-    			domMaids = ad.get(console.getAgentName());
+    			
+    			// Query all agents in the domain for their MicroAgents
+    			Set<Entry<String,Map<String,MicroAgentID>>> allMASet = ad.entrySet();
+    			Iterator <Entry<String,Map<String,MicroAgentID>>> allMASetIt = allMASet.iterator();
+    			while(allMASetIt.hasNext()){
+    				Entry<String,Map<String,MicroAgentID>> agMA = allMASetIt.next();
+    				Map<String,MicroAgentID> ma = agMA.getValue();
+    				
+    				if(null == domMaids) domMaids = ma;
+    				else domMaids.putAll(ma);			// Each MicroAgent should be unique in the domain, so this should work
+    			}
+    			
     			domainMicroAgentIDMap = domMaids;
     	    	
     	    	Set<String> allMas = domMaids.keySet();
@@ -136,8 +145,7 @@ public class HTool
 			// Rulebase name can't contain spaces
 			String nm = BWUtils.strReplace(rulebaseName,"\\s", "_");
 			
-			logger.log(Level.INFO, "Configuring XML for rulebase " + nm);
-			System.out.println("Configuring XML for rulebase " + nm);
+			logger.log(Level.FINE, "Configuring XML for rulebase " + nm);
 			rb.setName(nm);
 			
 			logger.log(Level.FINE,"XML data is\n " + rulebaseData);
@@ -160,7 +168,7 @@ public class HTool
 			DataElement[] dataElements = new DataElement[1];
 			dataElements[0] = new DataElement("RulebaseXML", rbXml);
 			MethodInvocation mi = new MethodInvocation("addRuleBase", dataElements);
-			MicroAgentData mad = console.invoke(maid, mi);
+			console.invoke(maid, mi);
 			rslt = 1;
 		} catch (Exception e){
 			e.printStackTrace();
