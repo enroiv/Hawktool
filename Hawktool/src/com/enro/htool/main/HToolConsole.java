@@ -38,6 +38,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	private String agentName;
 	
 	private Map<String,Map<String,MicroAgentID>> agentDetail = null;
+	private Map<String,MicroAgentID> rbeDetail = new HashMap<String,MicroAgentID>();
 	
 	public HToolConsole(Properties prps) throws Exception{
 		
@@ -141,6 +142,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	private void addMicroagent(AgentInstance ai, MicroAgentID [] mIDs) {
 		
 		Map<String,MicroAgentID> maidDtl = new HashMap<String,MicroAgentID>();
+		MicroAgentID rbeMAID = null;
 		
 		String aiNm = ai.getAgentID().getName();
 		if (!aiNm.equals(agentName)){
@@ -151,10 +153,21 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			logger.log(Level.INFO,"Found local agent: " + aiNm);
 		}
 		
+		// First pass to get the RulebaseEngine ID for the agent
 		for(MicroAgentID mID : mIDs){
-			maidDtl.put(mID.getName(),mID);
-			
-			System.out.println("Adding "+mID.getName()+ " to " + aiNm);
+			if(mID.getName().contentEquals(HToolConstants.REMANM)) {
+				rbeMAID = mID;
+			}
+			else{
+				System.out.println("Found "+mID.getName()+ ", which is not "+HToolConstants.REMANM);
+			}
+		}
+		
+		// Second pass to fill the MicroAgent ID by name and RBE by name maps
+		for(MicroAgentID mID : mIDs){
+			String mNm = mID.getName();
+			maidDtl.put(mNm,mID);
+			rbeDetail.put(mNm,rbeMAID);
 		}
 		
 		if(null == agentDetail){
@@ -212,6 +225,10 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	@Override
 	public synchronized void onErrorExceptionEvent(ErrorExceptionEvent event) {
 		logger.log(Level.SEVERE,"onErrorExceptionEvent: event=" + event);
+	}
+
+	public MicroAgentID getRBEMicroAgentFor(String microAgent) {
+		return rbeDetail.get(microAgent);
 	}
 	
 }

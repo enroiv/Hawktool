@@ -188,7 +188,6 @@ public class HTool
     	}
     	
     	if(domainMicroAgentIDMap == null) getMAgents(microAgents);
-    	MicroAgentID maidRBE = domainMicroAgentIDMap.get(HToolConstants.REMANM);
     	
     	for(int i=0;i<len;i++){
     		String template = templates[i];
@@ -196,7 +195,19 @@ public class HTool
     		
     		for(String microAgent : microAgents){
     			
-    			String sep = domain + ".";
+    			// Find the RuleBaseEngine Micro Agent for the agent which contains the requested MicroAgent
+    	    	MicroAgentID maidRBE = console.getRBEMicroAgentFor(microAgent);
+    	    	
+    	    	if(maidRBE == null){
+    	    		logger.log(Level.WARNING, "Unable to find RuleBase Engine MicroAgent for " + microAgent + ". Skipping...");
+    	    		continue;
+    	    	}
+    	    	else{
+    	    		System.out.println("RuleBase Engine MicroAgent for " + microAgent + " is in "+maidRBE.getAgent().getName());
+    	    		continue;
+    	    	}
+    			
+    			/*String sep = domain + ".";
     	    	String [] depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
     	    	String deployment = depComp[0];
     	    	String component = depComp[1];
@@ -206,7 +217,7 @@ public class HTool
     	    	
     	    	if(rbXml != null){
     	    		rslt += pushRulebase(maidRBE,rbXml);
-    	    	}
+    	    	}*/
     	    	
     		}
     	}
