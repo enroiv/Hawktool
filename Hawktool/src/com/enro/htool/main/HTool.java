@@ -3,6 +3,7 @@ package com.enro.htool.main;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import COM.TIBCO.hawk.talon.DataElement;
 import COM.TIBCO.hawk.talon.MethodInvocation;
 import COM.TIBCO.hawk.talon.MicroAgentData;
 import COM.TIBCO.hawk.talon.MicroAgentID;
+import COM.TIBCO.hawk.utilities.misc.HawkConstants;
 
 public class HTool
     implements Serializable
@@ -34,6 +36,11 @@ public class HTool
 
     public HTool(Properties props){
     	try {
+    		Hashtable <String,String> sslProps = HToolUtil.processSSLProperties(props);
+    		
+    		if(sslProps.size() > 0){
+    			props.put(HawkConstants.HAWK_SSL_PARAMS, sslProps);
+    		}
 			console = new HToolConsole(props);
 		} catch (Exception e) {
 			e.printStackTrace();
