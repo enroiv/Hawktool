@@ -134,7 +134,12 @@ public class HTool
 			Rulebase rb = new Rulebase(new StringReader(rulebaseData));
 			rb.setName(rulebaseName);
 			
+			logger.log(Level.FINE, "Configuring XML for rulebase " + rulebaseName);
+			logger.log(Level.FINE,"XML data is\n " + rulebaseData);
+			
 			RulebaseXML rbXml = new RulebaseXML(rb);
+			logger.log(Level.FINE,"Pocesses XML is\n"+rbXml.getXMLString());
+			
 			return rbXml;
 		} catch (Exception e) {
 			e.printStackTrace();
