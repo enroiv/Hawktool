@@ -1,6 +1,7 @@
 package com.enro.htool.main;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,7 +41,25 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	private Properties props;
 	private String agentName;
 	
+	/*
+	 * This map contains all agents in the domain along with their associated MicroAgents:
+	 * AG1			MA1_Name	MA1_ID
+	 * 				MA2_Name	MA2_ID
+	 * 				MAn_Name	MAn_ID
+	 * 
+	 * AGn			MA1_Name	MA1_ID
+	 * 				MA2_Name	MA2_ID
+	 * 				MAn_Name	MAn_ID				
+	 */
 	private Map<String,Map<String,MicroAgentID>> agentDetail = null;
+	
+	/*
+	 * This map contains the associated Rulebase Engine MicroAgent for every other MicroAgent
+	 * in the domain (so the application will know where to push the rulebases to)
+	 * MA1_Name@AGnm		RBE_ID
+	 * MA2_Name@AGnm		RBE_ID
+	 * MAn_Name@Agnm		RBE_ID
+	 */
 	private Map<String,MicroAgentID> rbeDetail = new HashMap<String,MicroAgentID>();
 	
 	public HToolConsole(Properties prps) throws Exception{
@@ -142,7 +161,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		return (am.invoke(maid, mi));
 	}
 	
-	private void addMicroagent(AgentInstance ai, MicroAgentID [] mIDs) {
+	private void addMicroagents(AgentInstance ai, MicroAgentID [] mIDs) {
 		
 		Map<String,MicroAgentID> maidDtl = new HashMap<String,MicroAgentID>();
 		MicroAgentID rbeMAID = null;
@@ -156,14 +175,17 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		
 		// First pass to get the RulebaseEngine ID for the agent
 		for(MicroAgentID mID : mIDs){
-			if(mID.getName().contentEquals(HToolConstants.REMANM)) rbeMAID = mID;
+			if(mID.getName().contentEquals(HToolConstants.REMANM)) {
+				rbeMAID = mID;
+				break;
+			}
 		}
 		
 		// Second pass to fill the MicroAgent ID by name and RBE by name maps
 		for(MicroAgentID mID : mIDs){
 			String mNm = mID.getName();
 			maidDtl.put(mNm,mID);
-			rbeDetail.put(mNm,rbeMAID);
+			rbeDetail.put(mNm+"@"+aiNm,rbeMAID);
 		}
 		
 		if(null == agentDetail) agentDetail = new HashMap<String,Map<String,MicroAgentID>>();
@@ -181,7 +203,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	@Override
 	public synchronized void onAgentAlive(AgentMonitorEvent event) {
 		AgentInstance agntInst = event.getAgentInstance();
-		addMicroagent(agntInst,agntInst.getStatusMicroAgents());		
+		addMicroagents(agntInst,agntInst.getStatusMicroAgents());		
 	}
 
 	@Override
@@ -204,7 +226,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	@Override
 	public synchronized void onMicroAgentAdded(MicroAgentListMonitorEvent event) {
 		MicroAgentID [] mIDs = {event.getMicroAgentID()};
-		addMicroagent(event.getAgentInstance(),mIDs);
+		addMicroagents(event.getAgentInstance(),mIDs);
 	}
 
 	@Override
@@ -219,13 +241,26 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		logger.log(Level.SEVERE,"onErrorExceptionEvent: event=" + event);
 	}
 
-	public MicroAgentID getRBEMicroAgentFor(String microAgent) {
-		return rbeDetail.get(microAgent);
+	public MicroAgentID [] getRBEMicroAgentsFor(String microAgent) {
+		
+		Set<String> matching = rbeDetail.keySet();
+		Set<String> matched = new HashSet<String>();
+		Set<MicroAgentID> extracted = new HashSet<MicroAgentID>();
+		
+		for(String s : matching){
+			if(s.contains(microAgent)) matched.add(s);
+		}
+		
+		for(String e : matched){
+			MicroAgentID maid = rbeDetail.get(e);
+			if(null != maid) extracted.add(maid);
+		}
+		
+		return extracted.toArray(new MicroAgentID[extracted.size()]);
 	}
 	
 	public void showDomainDetails(){
 		
-		//private Map<String,MicroAgentID> rbeDetail = new HashMap<String,MicroAgentID>();
 		System.out.println("Hawk Agent Detail");
 		
 		Set<Entry<String,Map<String,MicroAgentID>>> s = agentDetail.entrySet();

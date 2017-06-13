@@ -197,9 +197,9 @@ public class HTool
     		for(String microAgent : microAgents){
     			
     			// Find the RuleBaseEngine Micro Agent for the agent which contains the requested MicroAgent
-    	    	MicroAgentID maidRBE = console.getRBEMicroAgentFor(microAgent);
+    	    	MicroAgentID [] maidRBEs = console.getRBEMicroAgentsFor(microAgent);
     	    	
-    	    	if(maidRBE == null){
+    	    	if(maidRBEs == null){
     	    		logger.log(Level.WARNING, "Unable to find RuleBase Engine MicroAgent for " + microAgent + ". Skipping...");
     	    		continue;
     	    	}
@@ -220,9 +220,11 @@ public class HTool
     	    	String rulebaseName = BWUtils.strReplace(deployment+"_"+component+"_"+templateName,"\\.[hH][rR][bB]$","");
     	    	String rulebaseData = processRulebaseTemplate(domain,deployment,component,template);
     	    	RulebaseXML rbXml = getRulebaseXML(rulebaseData, rulebaseName);
-    	    	
+    	    		
     	    	if(rbXml != null){
-    	    		rslt += pushRulebase(maidRBE,rbXml);
+    	    		for(MicroAgentID maidRBE : maidRBEs){
+    	    			rslt += pushRulebase(maidRBE,rbXml);
+    	    		}
     	    	}
     	    	
     		}
