@@ -251,7 +251,6 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			Entry<String,MicroAgentID> eee = iii.next();
 			MicroAgentID mID = eee.getValue();
 			System.out.println("Micro Agent: "+eee.getKey()+"\tRBE: "+mID.getAgent().getName());
-			System.out.println("\n");
 		}
 		
 		System.out.println("\n");
