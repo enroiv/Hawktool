@@ -116,8 +116,9 @@ public class RBReplicator {
 			RBReplicator rep = new RBReplicator(a[0]);
 			rep.init();
 			
-			if(HToolUtil.filter(a, "showma").length > 0) rep.showAndQuit();
 			if(HToolUtil.filter(a, "showdet").length > 0) rep.showDetail();
+			if(HToolUtil.filter(a, "showma").length > 0) rep.showAndQuit();
+			
 				
 			rep.processRulebases();
 			rep.cleanup();
