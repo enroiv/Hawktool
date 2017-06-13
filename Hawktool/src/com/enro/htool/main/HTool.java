@@ -235,4 +235,8 @@ public class HTool
     public void cleanup(){
     	console.cleanUp();
     }
+
+	public void showDomainDetails() {
+		console.showDomainDetails();
+	}
 }

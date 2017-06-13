@@ -54,7 +54,7 @@ public class RBReplicator {
 		
 	}	
 	
-	public void showMA() {
+	public void showAndQuit() {
 		
 		if(domMicroAgents==null){
 			logger.log(Level.WARNING,"No MicroAgents were found");
@@ -116,7 +116,8 @@ public class RBReplicator {
 			RBReplicator rep = new RBReplicator(a[0]);
 			rep.init();
 			
-			if(a.length == 2) rep.showMA();
+			if(HToolUtil.filter(a, "showma").length > 0) rep.showAndQuit();
+			if(HToolUtil.filter(a, "showdet").length > 0) rep.showDetail();
 				
 			rep.processRulebases();
 			rep.cleanup();
@@ -125,5 +126,9 @@ public class RBReplicator {
 			e.printStackTrace();
 		}
 		
+	}
+
+	private void showDetail() {
+		hTool.showDomainDetails();		
 	}
 }

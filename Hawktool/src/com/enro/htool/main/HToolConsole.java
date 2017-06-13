@@ -1,8 +1,11 @@
 package com.enro.htool.main;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -218,6 +221,40 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 
 	public MicroAgentID getRBEMicroAgentFor(String microAgent) {
 		return rbeDetail.get(microAgent);
+	}
+	
+	public void showDomainDetails(){
+		
+		//private Map<String,MicroAgentID> rbeDetail = new HashMap<String,MicroAgentID>();
+		System.out.println("Hawk Agent Detail");
+		
+		Set<Entry<String,Map<String,MicroAgentID>>> s = agentDetail.entrySet();
+		Iterator<Entry<String,Map<String,MicroAgentID>>> it = s.iterator();
+		while(it.hasNext()){
+			Entry<String,Map<String,MicroAgentID>> e = it.next();
+			System.out.println("Agent "+e.getKey());
+			Map<String,MicroAgentID> m = e.getValue();
+			Set<Entry<String,MicroAgentID>> ss = m.entrySet();
+			Iterator<Entry<String,MicroAgentID>> ii = ss.iterator();
+			while(ii.hasNext()){
+				Entry <String,MicroAgentID> ee = ii.next();
+				System.out.println("\tMicroAgent: "+ee.getKey());
+			}
+			System.out.println("\n");
+		}
+		
+		System.out.println("\n\nRulebase Engine Detail");
+		
+		Set<Entry<String,MicroAgentID>> sss = rbeDetail.entrySet();
+		Iterator<Entry<String,MicroAgentID>> iii = sss.iterator();
+		while(iii.hasNext()){
+			Entry<String,MicroAgentID> eee = iii.next();
+			MicroAgentID mID = eee.getValue();
+			System.out.println("Micro Agent: "+eee.getKey()+"\tRBE: "+mID.getName()+"["+mID.getDisplayName()+"]");
+			System.out.println("\n");
+		}
+		
+		System.out.println("\n");
 	}
 	
 }
