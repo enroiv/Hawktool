@@ -178,7 +178,6 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	@Override
 	public synchronized void onAgentAlive(AgentMonitorEvent event) {
 		AgentInstance agntInst = event.getAgentInstance();
-		logger.log(Level.INFO,"Hawk agent <" + agntInst.getAgentID().getName() + "> was found");
 		addMicroagent(agntInst,agntInst.getStatusMicroAgents());		
 	}
 

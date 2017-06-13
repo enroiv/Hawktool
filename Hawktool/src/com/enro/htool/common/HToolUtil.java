@@ -1,13 +1,40 @@
 package com.enro.htool.common;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FilenameFilter;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
+
+import com.enro.bwutils.BWUtils;
 
 public class HToolUtil {
 	
 	private static final Logger logger = Logger.getLogger(HToolUtil.class.getName());
+	
+	public static String[] filter(String [] s, String it){
+		Set<String> set = new HashSet<String>();
+		
+		for(String ss : s){
+			if(ss.contains(it)) set.add(ss);
+		}
+		
+		return set.toArray(new String[set.size()]);
+	}
 	
 	public static Properties getProps(String params[]){
         Properties p = new Properties();
@@ -20,6 +47,109 @@ public class HToolUtil {
 
         return p;
     }
+	
+	public static Properties getProperties(String conf) throws Exception {
+		
+		ConfReader cr = new ConfReader(conf);
+		Properties props = cr.getSection("General");
+		String transport = cr.getString("General", "hawk_transport", "none");
+		
+		if(transport.contentEquals("none")){
+			System.err.println("Invalid configuration specified");
+			System.exit(1);
+		} else {
+			props.putAll(cr.getSection(transport));
+		}
+		
+		props.putAll(cr.getSection("Template"));
+		props.putAll(cr.getSection("SSL"));
+		
+		return props;
+	}
+	
+	public static Map<String,Properties> getMADetail(String conf) throws Exception{
+		ConfReader cr = new ConfReader(conf);
+		Map<String,Properties> maDetail = new HashMap<String,Properties>();
+		String [] mags = cr.getMASections();
+		
+		for(String ma : mags){
+			maDetail.put(ma, cr.getSection(ma));
+		}
+		
+		return maDetail;
+	}
+	
+private static Map<String, String> getTemplates(String path, String prefix) {
+		
+		Map<String,String> templates = new HashMap<String,String>();
+		BufferedReader br = null;
+		final String pfx = prefix.toLowerCase()+".";
+		
+		try{
+			
+			File folder = new File(path);
+			File[] files = folder.listFiles(new FilenameFilter() {
+			    public boolean accept(File dir, String name) {
+			        return name.toLowerCase().endsWith(".hrb") &&
+			        		name.toLowerCase().startsWith(pfx);
+			    }
+			});
+			
+			if(null!=files && files.length>0){
+				logger.log(Level.FINE,files.length + " rulebases were found");
+				
+				for(File file : files){
+					
+					FileReader fr = new FileReader(file);
+					StringBuilder sb = new StringBuilder();
+					
+					XMLStreamReader xmlSR = XMLInputFactory.newInstance().createXMLStreamReader(fr);
+					String encoding = xmlSR.getCharacterEncodingScheme();
+					logger.log(Level.CONFIG,"Rulebase "+ file.getName() +" reported encoding as: " + encoding);
+					
+					br = new BufferedReader(new InputStreamReader(new FileInputStream(file),encoding));
+					
+					String sCurrentLine = br.readLine();
+					while (sCurrentLine != null) {
+			            sb.append(sCurrentLine);
+			            sCurrentLine = br.readLine();
+			        }
+					
+					br.close();
+					templates.put(BWUtils.strReplace(BWUtils.strReplace(file.getName(),"\\.[hH][rR][bB]$",""), pfx, ""),sb.toString());
+				}
+			}
+		} catch(ArrayIndexOutOfBoundsException ee){
+			logger.log(Level.SEVERE,"Unable to read from templates directory!!");
+			System.exit(1);
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			System.exit(1);
+		}
+		
+		return templates;
+	}
+	
+	public static Map<String, Map<String, String>> getMARulebases(String path, Map<String, Properties> maDetail) {
+		
+		Map<String, Map<String, String>> maRulebases = new HashMap<String,Map<String,String>>();
+		
+		Set<Entry<String,Properties>> set = maDetail.entrySet();
+		Iterator<Entry<String,Properties>> it = set.iterator();
+		
+		while(it.hasNext()){
+			Entry<String,Properties> entry = it.next();
+			String ma = entry.getKey();
+			ma = ma.substring(ma.indexOf("ma:")+"ma:".length());
+			String pfx = entry.getValue().getProperty("prefix");
+			
+			Map<String,String> maTemplates = getTemplates(path,pfx);
+			maRulebases.put(ma, maTemplates);
+		}
+		
+		return maRulebases;
+	}
 	
 	public static Hashtable<String,String> processSSLProperties(Properties props){
 		

@@ -1,14 +1,6 @@
 package com.enro.htool.main;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,127 +10,68 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamReader;
-
-import com.enro.bwutils.BWUtils;
-import com.enro.htool.common.HToolConstants;
+import com.enro.htool.common.HToolUtil;
 
 public class RBReplicator {
 	
 	private final static Logger logger = Logger.getLogger(RBReplicator.class.getName());
+	private Properties properties;
+	private String path;
+	private HTool hTool;
+	private String [] reqMicroAgents;
+	private String [] domMicroAgents;
+	private Map<String,Map<String,String>> maRulebases;
+	private String domain;
 	
-	private static Properties getDefaultProperties() {
-		
-		Properties props = new Properties();
-		String agentNm;
-		
-		logger.warning("Using default properties!");
-		
-		try {
-			java.net.InetAddress hostInetInfo = java.net.InetAddress.getLocalHost();
-			agentNm = hostInetInfo.getHostName();
-			props.put("agent_name", agentNm);
-			
-			props.put("hawk_domain","bw-demo-domain");	// This will ONLY work if your domain is actually called "bw-demo-domain" :-P
-			props.put("hawk_transport","tibrv");
-			props.put("rv_service","7474");
-			props.put("rv_network",";");
-			props.put("rv_daemon","tcp:7474");
-			
-		} catch (java.net.UnknownHostException uhe) {
-			logger.log(Level.SEVERE,"Usage: java RBReplicator <propFile> <RuleBase Templates Dir>");
-			logger.log(Level.SEVERE,"Unable to use default properties. Make sure to provide a valid Hawk properties file");
-			logger.log(Level.SEVERE,uhe.getLocalizedMessage());
-			System.exit(1);
-		}
-		
-		return props;
+	public RBReplicator(String path) {
+		this.path = path;
 	}
 	
-	private static Properties getProperties(String[] a) {
-		
-		Properties props;
-		
-		try {
-			props = new Properties();
-			InputStream is = new FileInputStream(a[0]);
-			props.load(is);
-			is.close();
+	public void init() throws Exception{
+		setProps(HToolUtil.getProperties(path));
+		domain = properties.getProperty("hawk_domain");
+		Map<String,Properties> maDetail	= HToolUtil.getMADetail(path);
+		maRulebases = HToolUtil.getMARulebases(properties.getProperty("path"),maDetail);
 
-		} catch (Exception e) {
-			props = getDefaultProperties();
-		}
+		reqMicroAgents = maRulebases.keySet().toArray(new String[maRulebases.keySet().size()]);
 		
-		return props;
+		hTool = new HTool(properties);	
+		
+		domMicroAgents = hTool.getMAgents(reqMicroAgents);
 	}
 
-	private static Map<String, String> getTemplates(String[] a) {
-		
-		Map<String,String> templates = new HashMap<String,String>();
-		BufferedReader br = null;
-		
-		try{
-			
-			File folder = new File(a[1]);
-			File[] files = folder.listFiles(new FilenameFilter() {
-			    public boolean accept(File dir, String name) {
-			        return name.toLowerCase().endsWith(".hrb");
-			    }
-			});
-			
-			logger.log(Level.FINE,files.length + " rulebases were found");
-			
-			for(File file : files){
-				
-				FileReader fr = new FileReader(file);
-				StringBuilder sb = new StringBuilder();
-				
-				XMLStreamReader xmlSR = XMLInputFactory.newInstance().createXMLStreamReader(fr);
-				String encoding = xmlSR.getCharacterEncodingScheme();
-				logger.log(Level.CONFIG,"Rulebase "+ file.getName() +" reported encoding as: " + encoding);
-				
-				br = new BufferedReader(new InputStreamReader(new FileInputStream(file),encoding));
-				
-				String sCurrentLine = br.readLine();
-				while (sCurrentLine != null) {
-		            sb.append(sCurrentLine);
-		            sCurrentLine = br.readLine();
-		        }
-				
-				br.close();
-				templates.put(BWUtils.strReplace(file.getName(),"\\.[hH][rR][bB]$",""),sb.toString());
-			}
-			
-		} catch(ArrayIndexOutOfBoundsException ee){
-			logger.log(Level.SEVERE,"Invalid templates directory!!");
-			logger.log(Level.SEVERE,"Usage: java RBReplicator <propFile> <RuleBase Templates Dir>");
-			System.exit(1);
-		}
-		catch(Exception e){
-			e.printStackTrace();
-			System.exit(1);
-		}
-		
-		return templates;
+	private static void showUsage(){
+		System.err.println("Usage: RBReplicator [conf_file]");
+		System.exit(1);
 	}
 	
-	public static void main(String [] a){
+	private void cleanup() {
+		hTool.cleanup();
+	}
+
+	private void setProps(Properties properties) {
+		this.properties = properties;
 		
-		Properties props = getProperties(a);
-		Map<String,String> templates = getTemplates(a);
+	}	
+	
+	public void showMA() {
 		
-		HTool hTool = new HTool(props);
+		if(domMicroAgents==null){
+			logger.log(Level.WARNING,"No MicroAgents were found");
+			return;
+		}
 		
-		String microagents[] = {HToolConstants.BWMANM};
-        String [] ma = hTool.getMAgents(microagents);
-        
-        if(a.length == 3){
-        	showMA(ma);
-        	System.exit(0);
-        }
-        
-        Set<Entry<String,String>> eSet = templates.entrySet();
+		for(String domMicroAgent : domMicroAgents){
+			logger.log(Level.INFO,"Found MicroAgent: " + domMicroAgent);
+		}
+		
+		hTool.cleanup();
+    	System.exit(0);
+	}
+
+	private static void processRulebase(HTool hTool,String domain, String [] mas, Map<String, String> templateData) {
+		
+		Set<Entry<String,String>> eSet = templateData.entrySet();
         Iterator<Entry<String, String>> it = eSet.iterator();
         List<String> allKeys = new ArrayList<String>();
         List<String> allVals = new ArrayList<String>();
@@ -152,16 +85,45 @@ public class RBReplicator {
         String [] rb = allVals.toArray(new String[allKeys.size()]);        
         String [] nm = allKeys.toArray(new String[allVals.size()]);
         
-        logger.log(Level.FINE,hTool.processRulebaseTemplates(props.getProperty("hawk_domain","bw-demo-domain"), ma,rb,nm)+
+        logger.log(Level.FINE,hTool.processRulebaseTemplates(domain, mas,rb,nm)+
         		" rulebases were sent to Hawk agents in the domain");
-        
-        hTool.cleanup();
 		
 	}
-
-	private static void showMA(String[] mas) {
-		for(String ma : mas){
-			logger.log(Level.INFO,"Found MicroAgent: " + ma);
+	
+	public void processRulebases() {
+		
+		if(domMicroAgents == null){
+			logger.log(Level.WARNING,"No appropriate MicroAgents were found in the domain");
+			return;
 		}
+		
+		for(String ma : reqMicroAgents){
+			logger.log(Level.INFO,"Processing Rulebases for MicroAgent: " + ma);
+			
+			Map<String,String> templateData = maRulebases.get(ma);
+			if(null != templateData && templateData.size()>0){
+				processRulebase(hTool,domain, HToolUtil.filter(domMicroAgents, ma),templateData);
+			}
+		}
+	}
+
+	public static void main(String [] a){
+		
+		if(a.length == 0) showUsage();
+		
+		try{
+			
+			RBReplicator rep = new RBReplicator(a[0]);
+			rep.init();
+			
+			if(a.length == 2) rep.showMA();
+				
+			rep.processRulebases();
+			rep.cleanup();
+			
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+		
 	}
 }

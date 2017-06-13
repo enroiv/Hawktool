@@ -147,6 +147,7 @@ public class HTool
 			
 			logger.log(Level.FINE, "Configuring XML for rulebase " + nm);
 			rb.setName(nm);
+			rb.setLastModification(this.getClass().getSimpleName());
 			
 			logger.log(Level.FINE,"XML data is\n " + rulebaseData);
 			
@@ -202,10 +203,19 @@ public class HTool
     	    		logger.log(Level.WARNING, "Unable to find RuleBase Engine MicroAgent for " + microAgent + ". Skipping...");
     	    		continue;
     	    	}
+    	    	
+    	    	String [] depComp = null;
+    	    	
+    	    	if(microAgent.contains(HToolConstants.BWMANM)){
+    	    		String sep = domain + ".";
+        	    	depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
+    	    	}
+    	    	else{
+    	    		String sep = "hawk.";
+        	    	depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
+    	    	}
     			
-    			String sep = domain + ".";
-    	    	String [] depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
-    	    	String deployment = depComp[0];
+    			String deployment = depComp[0];
     	    	String component = depComp[1];
     	    	String rulebaseName = BWUtils.strReplace(deployment+"_"+component+"_"+templateName,"\\.[hH][rR][bB]$","");
     	    	String rulebaseData = processRulebaseTemplate(domain,deployment,component,template);
