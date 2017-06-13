@@ -2,10 +2,10 @@ package com.enro.htool.common;
 
 public class HToolConstants {
 	// Hawk Event Service MicroAgent
-	public static final String SERVMA = "COM.TIBCO.hawk.hma.Services";
+	//public static final String SERVMA = "COM.TIBCO.hawk.hma.Services";
 	
 	// JMS plugin MicroAgent
-	public static final String JMSMA = "COM.TIBCO.hawk.tibjms.HawkController";
+	//public static final String JMSMA = "COM.TIBCO.hawk.tibjms.HawkController";
 	
 	// BW MicroAgent
 	public static final String BWMANM = "COM.TIBCO.ADAPTER.bwengine";
