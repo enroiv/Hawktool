@@ -296,7 +296,11 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			}
 		}
 		
-		return s.toArray(new MicroAgentID[s.size()]);
+		MicroAgentID [] filtered = s.toArray(new MicroAgentID[s.size()]);
+		
+		System.out.println("\nFiltered by "+ service+". Original: "+maids.length+"\tFiltered: "+filtered.length);
+		
+		return filtered;
 	}
 
 	public boolean getServiceMicroAgentsFor(MicroAgentID srvMaid, String service) {
