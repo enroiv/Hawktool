@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import com.enro.htool.common.HToolConstants;
 import com.enro.htool.common.HToolUtil;
 
 public class RBReplicator {
@@ -22,21 +23,33 @@ public class RBReplicator {
 	private String [] domMicroAgents;
 	private Map<String,Map<String,String>> maRulebases;
 	private String domain;
+	private String [] services;
 	
 	public RBReplicator(String path) {
 		this.path = path;
 	}
 	
 	public void init() throws Exception{
+		
+		// Read config file
 		setProps(HToolUtil.getProperties(path));
+		
 		domain = properties.getProperty("hawk_domain");
+		
+		// Read MicroAgent sections ([ma:xxx])
 		Map<String,Properties> maDetail	= HToolUtil.getMADetail(path);
+		
+		// Read associated rulebases for each MicroAgent
 		maRulebases = HToolUtil.getMARulebases(properties.getProperty("path"),maDetail);
-
+		
+		// Get the list of requested MicroAgents
 		reqMicroAgents = maRulebases.keySet().toArray(new String[maRulebases.keySet().size()]);
 		
-		hTool = new HTool(properties);	
+		// If available, get the list of services for the Service Microagent
+		services = HToolUtil.getMAServices(maDetail);
 		
+		// Instantiate HTool
+		hTool = new HTool(properties);	
 		domMicroAgents = hTool.getMAgents(reqMicroAgents);
 	}
 
@@ -69,7 +82,7 @@ public class RBReplicator {
     	System.exit(0);
 	}
 
-	private static void processRulebase(HTool hTool,String domain, String [] mas, Map<String, String> templateData) {
+	private void processRulebase(HTool hTool,String domain, String [] mas, Map<String, String> templateData) {
 		
 		Set<Entry<String,String>> eSet = templateData.entrySet();
         Iterator<Entry<String, String>> it = eSet.iterator();
@@ -84,9 +97,16 @@ public class RBReplicator {
         
         String [] rb = allVals.toArray(new String[allKeys.size()]);        
         String [] nm = allKeys.toArray(new String[allVals.size()]);
+        int num = 0;
         
-        logger.log(Level.FINE,hTool.processRulebaseTemplates(domain, mas,rb,nm)+
-        		" rulebases were sent to Hawk agents in the domain");
+        if(HToolUtil.filter(mas,HToolConstants.SERVMA).length>0){
+        	num = hTool.processRulebaseTemplates(domain, mas,rb,nm,services);
+        }
+        else{
+        	num = hTool.processRulebaseTemplates(domain, mas,rb,nm);
+        }
+        
+        logger.log(Level.FINE,+ num + " rulebases were sent to Hawk agents in the domain");
 		
 	}
 	

@@ -36,7 +36,7 @@ public class HToolUtil {
 		return set.toArray(new String[set.size()]);
 	}
 	
-	public static Properties getProps(String params[]){
+	public static Properties getPropas(String params[]){
         Properties p = new Properties();
         
         for(int i = 0; i < params.length; i++){
@@ -79,7 +79,7 @@ public class HToolUtil {
 		return maDetail;
 	}
 	
-private static Map<String, String> getTemplates(String path, String prefix) {
+	private static Map<String, String> getTemplates(String path, String prefix) {
 		
 		Map<String,String> templates = new HashMap<String,String>();
 		BufferedReader br = null;
@@ -151,6 +151,27 @@ private static Map<String, String> getTemplates(String path, String prefix) {
 		return maRulebases;
 	}
 	
+	public static String[] getMAServices(Map<String, Properties> maDetail) {
+		
+		Set<Entry<String,Properties>> set = maDetail.entrySet();
+		Iterator<Entry<String,Properties>> it = set.iterator();
+		String [] rslt = null;
+		
+		while(it.hasNext()){
+			Entry<String,Properties> entry = it.next();
+			String ma = entry.getKey();
+			ma = ma.substring(ma.indexOf("ma:")+"ma:".length());
+			String svc = entry.getValue().getProperty("service_list");
+			
+			if(null != svc && svc.length() > 0){
+				rslt = svc.split(",");
+				break;
+			}
+		}
+		
+		return rslt;
+	}
+	
 	public static Hashtable<String,String> processSSLProperties(Properties props){
 		
 		Hashtable<String,String> sslProps = new Hashtable<String,String>();
@@ -218,4 +239,5 @@ private static Map<String, String> getTemplates(String path, String prefix) {
 		
 		return sslProps;
 	}
+	
 }

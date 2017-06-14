@@ -52,10 +52,6 @@ public class HTool
     	init(props);
     }
     
-    public HTool(String hawkTransportParams[]){
-    	init(HToolUtil.getProps(hawkTransportParams));
-    }  
-    
     public String [] getMAgents(String mAgents[]){
     	
     	Map<String,Map<String,MicroAgentID>> ad = console.getAgentDetails();
@@ -128,13 +124,15 @@ public class HTool
         return (String[])microAgents.toArray(new String[microAgents.size()]);
     }
     
-    private String processRulebaseTemplate(String domain, String deployment, String component, String template) {
+    private String replaceInTemplate(String domain, String deployment, String component, String template) {
     	
-    	return BWUtils.strReplace(
+    	String processed = BWUtils.strReplace(
     			BWUtils.strReplace(
     					BWUtils.strReplace(template,HToolConstants.DOMEXP,domain),
     			HToolConstants.DEPEXP,deployment),
     		HToolConstants.CMPEXP,component);
+    	
+    	return processed;
 
 	}
     
@@ -178,8 +176,46 @@ public class HTool
 		return rslt;
 	}
     
-    public int processRulebaseTemplates(String domain,String  [] microAgents,String [] templates,String [] templateNames){
+    private int processRulebaseTemplate(String domain,String microAgent,String template,String templateName,String service){
     	
+    	int rslt = 0;
+    	
+    	// Find the RuleBaseEngine Micro Agent for the agent which contains the requested MicroAgent
+    	MicroAgentID [] maidRBEs = console.getRBEMicroAgentsFor(microAgent,service);
+    	
+    	if(maidRBEs == null){
+    		logger.log(Level.WARNING, "Unable to find RuleBase Engine MicroAgent for " + microAgent + ". Skipping...");
+    		return rslt;
+    	}
+    	
+    	String [] depComp = null;
+    	
+    	if(microAgent.contains(HToolConstants.BWMANM)){
+    		String sep = domain + ".";
+	    	depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
+    	}
+    	else{
+    		String sep = "hawk.";
+	    	depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
+    	}
+		
+		String deployment = depComp[0];
+    	String component = depComp[1];
+    	String rulebaseName = BWUtils.strReplace(deployment+"_"+component+"_"+templateName,"\\.[hH][rR][bB]$","");
+    	String rulebaseData = replaceInTemplate(domain,deployment,component,template);
+    	RulebaseXML rbXml = getRulebaseXML(rulebaseData, rulebaseName);
+    		
+    	if(rbXml != null){
+    		for(MicroAgentID maidRBE : maidRBEs){
+    			logger.log(Level.FINE,"Pushing "+rulebaseName+" to "+maidRBE.getAgent().getName());
+    			rslt += pushRulebase(maidRBE,rbXml);
+    		}
+    	}
+    	
+    	return rslt;
+    }
+    
+    public int processRulebaseTemplates(String domain,String  [] microAgents,String [] templates,String [] templateNames, String [] services){
     	int rslt = 0;
     	int len = templates.length;
     	
@@ -196,42 +232,22 @@ public class HTool
     		
     		for(String microAgent : microAgents){
     			
-    			// Find the RuleBaseEngine Micro Agent for the agent which contains the requested MicroAgent
-    	    	MicroAgentID [] maidRBEs = console.getRBEMicroAgentsFor(microAgent);
-    	    	
-    	    	if(maidRBEs == null){
-    	    		logger.log(Level.WARNING, "Unable to find RuleBase Engine MicroAgent for " + microAgent + ". Skipping...");
-    	    		continue;
-    	    	}
-    	    	
-    	    	String [] depComp = null;
-    	    	
-    	    	if(microAgent.contains(HToolConstants.BWMANM)){
-    	    		String sep = domain + ".";
-        	    	depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
-    	    	}
-    	    	else{
-    	    		String sep = "hawk.";
-        	    	depComp = microAgent.substring(microAgent.lastIndexOf(sep)+sep.length()).split("\\.");
-    	    	}
-    			
-    			String deployment = depComp[0];
-    	    	String component = depComp[1];
-    	    	String rulebaseName = BWUtils.strReplace(deployment+"_"+component+"_"+templateName,"\\.[hH][rR][bB]$","");
-    	    	String rulebaseData = processRulebaseTemplate(domain,deployment,component,template);
-    	    	RulebaseXML rbXml = getRulebaseXML(rulebaseData, rulebaseName);
-    	    		
-    	    	if(rbXml != null){
-    	    		for(MicroAgentID maidRBE : maidRBEs){
-    	    			rslt += pushRulebase(maidRBE,rbXml);
-    	    		}
-    	    	}
+    			if(services == null){
+    				rslt = processRulebaseTemplate(domain, microAgent, template, templateName, null);
+    			} else{
+    				for(String service : services){
+    					rslt += processRulebaseTemplate(domain, microAgent, template, templateName, service);
+    				}
+    			}
     	    	
     		}
     	}
     	
     	return rslt;
-    	
+    }
+    
+    public int processRulebaseTemplates(String domain,String  [] microAgents,String [] templates,String [] templateNames){
+    	return processRulebaseTemplates(domain,microAgents,templates,templateNames,null);
     } 
     
     public void cleanup(){

@@ -23,10 +23,12 @@ import COM.TIBCO.hawk.console.hawkeye.MicroAgentListMonitorEvent;
 import COM.TIBCO.hawk.console.hawkeye.MicroAgentListMonitorListener;
 import COM.TIBCO.hawk.console.hawkeye.TIBHawkConsole;
 import COM.TIBCO.hawk.console.hawkeye.TIBHawkConsoleFactory;
+import COM.TIBCO.hawk.talon.DataElement;
 import COM.TIBCO.hawk.talon.MethodInvocation;
 import COM.TIBCO.hawk.talon.MicroAgentData;
 import COM.TIBCO.hawk.talon.MicroAgentException;
 import COM.TIBCO.hawk.talon.MicroAgentID;
+import COM.TIBCO.hawk.talon.TabularData;
 
 public class HToolConsole implements AgentMonitorListener,
 MicroAgentListMonitorListener, ErrorExceptionListener{
@@ -61,6 +63,15 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 	 * MAn_Name@Agnm		RBE_ID
 	 */
 	private Map<String,MicroAgentID> rbeDetail = new HashMap<String,MicroAgentID>();
+	
+	/*
+	 * This map contains the associated Services MicroAgent for every other MicroAgent
+	 * in the domain
+	 * MA1_Name@AGnm		SRV_ID
+	 * MA2_Name@AGnm		SRV_ID
+	 * MAn_Name@Agnm		SRV_ID
+	 */
+	private Map<String,MicroAgentID> srvDetail = new HashMap<String,MicroAgentID>();
 	
 	public HToolConsole(Properties prps) throws Exception{
 		
@@ -173,12 +184,10 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			logger.log(Level.INFO,"Found local agent: " + aiNm);
 		}
 		
-		// First pass to get the RulebaseEngine ID for the agent
+		// First pass to get the RulebaseEngine and Services ID for the agent
 		for(MicroAgentID mID : mIDs){
-			if(mID.getName().contentEquals(HToolConstants.REMANM)) {
-				rbeMAID = mID;
-				break;
-			}
+			if(mID.getName().contentEquals(HToolConstants.REMANM)) rbeMAID = mID;
+			if(mID.getName().contentEquals(HToolConstants.SERVMA)) srvDetail.put(mID.getName()+"@"+aiNm, mID);
 		}
 		
 		// Second pass to fill the MicroAgent ID by name and RBE by name maps
@@ -241,7 +250,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		logger.log(Level.SEVERE,"onErrorExceptionEvent: event=" + event);
 	}
 
-	public MicroAgentID [] getRBEMicroAgentsFor(String microAgent) {
+	public MicroAgentID [] getRBEMicroAgentsFor(String microAgent,String service) {
 		
 		Set<String> matching = rbeDetail.keySet();
 		Set<String> matched = new HashSet<String>();
@@ -256,7 +265,64 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			if(null != maid) extracted.add(maid);
 		}
 		
-		return extracted.toArray(new MicroAgentID[extracted.size()]);
+		MicroAgentID [] maids = extracted.toArray(new MicroAgentID[extracted.size()]);
+		
+		return filterByService(maids,service);
+	}
+	
+	private MicroAgentID[] filterByService(MicroAgentID[] maids, String service) {
+		
+		// No service was specified. Return full array
+		if (null == service) return maids;
+		
+		logger.log(Level.FINE,"Looking for agents implementing "+service);
+		
+		// Return only those MicroAgents which implement the requested service
+		Set<MicroAgentID> s = new HashSet<MicroAgentID>();
+		
+		for(MicroAgentID maid : maids){
+			String agentNm = maid.getAgent().getName();
+			
+			logger.log(Level.FINE,"Inspecting "+agentNm);
+			
+			// Get the associated Service MA for this MicroAgent and check if it implements the requested service
+			MicroAgentID srvMa = srvDetail.get(HToolConstants.SERVMA+"@"+agentNm);
+			if(getServiceMicroAgentsFor(srvMa,service)) {
+				s.add(maid);
+				logger.log(Level.FINE,agentNm+" implements "+service);
+			}
+		}
+		
+		return s.toArray(new MicroAgentID[s.size()]);
+	}
+
+	public boolean getServiceMicroAgentsFor(MicroAgentID srvMaid, String service) {
+		
+		boolean rslt = false;
+		
+		// null MicroAgents don't implement anything!!
+		if(null==srvMaid) return rslt;
+		
+		try{
+			DataElement[] dataElements = new DataElement[1];
+			dataElements[0] = new DataElement("Service", "");
+			MethodInvocation mi = new MethodInvocation("getServiceStatus", dataElements);
+			TabularData td = (TabularData) invoke(srvMaid, mi).getData();
+			Object [][] fullTable = td.getAllData();
+			
+			for(int i=0;i<fullTable.length;i++){
+				String str = fullTable[i][0].toString();
+				
+				if(str.contains(service)){
+					rslt = true;
+					break;
+				}
+			}
+		} catch(Exception ex){
+			ex.printStackTrace();
+		}
+		
+		return rslt;
 	}
 	
 	public void showDomainDetails(){

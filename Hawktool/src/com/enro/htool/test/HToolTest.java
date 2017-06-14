@@ -16,11 +16,11 @@ public class HToolTest{
 
     public static void main(String a[])
     {
-        String transport[] = {
+        /*String transport[] = {
             "agent_name=bw6-demo-box", "hawk_domain=bw-demo-domain", "hawk_transport=tibrv", "rv_service=7474", "rv_network=;", "rv_daemon=tcp:7474"
         };
         String microagents[] = {
-        		HToolConstants.BWMANM/*,HToolConstants.REMANM*/
+        		HToolConstants.BWMANM,HToolConstants.REMANM
         };
         
         HTool hTool = new HTool(transport);
@@ -30,7 +30,7 @@ public class HToolTest{
         String [] ma = hTool.getMAgents(microagents);
         
         logger.log(Level.FINE,hTool.processRulebaseTemplates("bw-demo-domain", ma,rb,nm)+
-        		" rulebases were sent to Hawk agents in the domain");
+        		" rulebases were sent to Hawk agents in the domain");*/
         
     }
 }
