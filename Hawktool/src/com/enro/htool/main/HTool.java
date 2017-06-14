@@ -179,7 +179,7 @@ public class HTool
     private int processRulebaseTemplate(String domain,String microAgent,String template,String templateName,String service){
     	
     	int rslt = 0;
-    	
+    	if(service != null) System.out.println("\nProcessing "+templateName+" for "+service);
     	// Find the RuleBaseEngine Micro Agent for the agent which contains the requested MicroAgent
     	MicroAgentID [] maidRBEs = console.getRBEMicroAgentsFor(microAgent,service);
     	
