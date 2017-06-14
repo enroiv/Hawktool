@@ -276,6 +276,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		if (null == service) return maids;
 		
 		logger.log(Level.FINE,"Looking for agents implementing "+service);
+		System.out.println("Looking for agents implementing "+service);
 		
 		// Return only those MicroAgents which implement the requested service
 		Set<MicroAgentID> s = new HashSet<MicroAgentID>();
@@ -284,12 +285,14 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			String agentNm = maid.getAgent().getName();
 			
 			logger.log(Level.FINE,"Inspecting "+agentNm);
+			System.out.println("Inspecting "+agentNm);
 			
 			// Get the associated Service MA for this MicroAgent and check if it implements the requested service
 			MicroAgentID srvMa = srvDetail.get(HToolConstants.SERVMA+"@"+agentNm);
 			if(getServiceMicroAgentsFor(srvMa,service)) {
 				s.add(maid);
 				logger.log(Level.FINE,agentNm+" implements "+service);
+				System.out.println(agentNm+" implements "+service);
 			}
 		}
 		
@@ -314,6 +317,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 				String str = fullTable[i][0].toString();
 				
 				if(str.contains(service)){
+					System.out.println(str+" implements "+service);
 					rslt = true;
 					break;
 				}
