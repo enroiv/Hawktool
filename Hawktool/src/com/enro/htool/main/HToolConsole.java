@@ -250,7 +250,7 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		logger.log(Level.SEVERE,"onErrorExceptionEvent: event=" + event);
 	}
 
-	public MicroAgentID [] getRBEMicroAgentsFor(String microAgent,String service) {
+	public MicroAgentID [] getRBEMicroAgentsFor(String microAgent,String service, String templateName) {
 		
 		Set<String> matching = rbeDetail.keySet();
 		Set<String> matched = new HashSet<String>();
@@ -267,13 +267,19 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		
 		MicroAgentID [] maids = extracted.toArray(new MicroAgentID[extracted.size()]);
 		
-		return filterByService(maids,service);
+		return filterByService(maids,service,templateName);
 	}
 	
-	private MicroAgentID[] filterByService(MicroAgentID[] maids, String service) {
+	private MicroAgentID[] filterByService(MicroAgentID[] maids, String service,String templateName) {
 		
 		// No service was specified. Return full array
 		if (null == service) return maids;
+		
+		if(!templateName.contentEquals(service)){
+			logger.log(Level.WARNING,"Template name: "+templateName+" doesn't match service: "+service+". Ignoring");
+			System.out.println("Template name: "+templateName+" doesn't match service: "+service+". Ignoring");
+			return new MicroAgentID[0];
+		}
 		
 		logger.log(Level.FINE,"Looking for agents implementing "+service);
 		System.out.println("Looking for agents implementing "+service);

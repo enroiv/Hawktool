@@ -181,7 +181,7 @@ public class HTool
     	int rslt = 0;
     	if(service != null) System.out.println("\nProcessing "+templateName+" for "+service);
     	// Find the RuleBaseEngine Micro Agent for the agent which contains the requested MicroAgent
-    	MicroAgentID [] maidRBEs = console.getRBEMicroAgentsFor(microAgent,service);
+    	MicroAgentID [] maidRBEs = console.getRBEMicroAgentsFor(microAgent,service,templateName);
     	
     	if(maidRBEs == null){
     		logger.log(Level.WARNING, "Unable to find RuleBase Engine MicroAgent for " + microAgent + ". Skipping...");
