@@ -277,12 +277,10 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		
 		if(!templateName.contentEquals(service)){
 			logger.log(Level.WARNING,"Template name: "+templateName+" doesn't match service: "+service+". Ignoring");
-			System.out.println("Template name: "+templateName+" doesn't match service: "+service+". Ignoring");
 			return new MicroAgentID[0];
 		}
 		
 		logger.log(Level.FINE,"Looking for agents implementing "+service);
-		System.out.println("Looking for agents implementing "+service);
 		
 		// Return only those MicroAgents which implement the requested service
 		Set<MicroAgentID> s = new HashSet<MicroAgentID>();
@@ -291,20 +289,16 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 			String agentNm = maid.getAgent().getName();
 			
 			logger.log(Level.FINE,"Inspecting "+agentNm);
-			System.out.println("Inspecting "+agentNm);
 			
 			// Get the associated Service MA for this MicroAgent and check if it implements the requested service
 			MicroAgentID srvMa = srvDetail.get(HToolConstants.SERVMA+"@"+agentNm);
 			if(getServiceMicroAgentsFor(srvMa,service)) {
 				s.add(maid);
 				logger.log(Level.FINE,agentNm+" implements "+service);
-				System.out.println(agentNm+" implements "+service);
 			}
 		}
 		
 		MicroAgentID [] filtered = s.toArray(new MicroAgentID[s.size()]);
-		
-		System.out.println("\nFiltered by "+ service+". Original: "+maids.length+"\tFiltered: "+filtered.length);
 		
 		return filtered;
 	}
@@ -327,7 +321,6 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 				String str = fullTable[i][0].toString();
 				
 				if(str.contains(service)){
-					System.out.println(str+" implements "+service);
 					rslt = true;
 					break;
 				}
