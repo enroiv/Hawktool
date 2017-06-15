@@ -1,5 +1,6 @@
 package com.enro.htool.main;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -54,7 +55,13 @@ public class RBReplicator {
 	}
 
 	private static void showUsage(){
-		System.err.println("Usage: RBReplicator [conf_file]");
+		String nm;
+		
+		try{
+			nm = new File(RBReplicator.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
+		} catch(Exception e){nm = "RBReplicator";}
+		System.err.println("Usage: " + nm + " [conf_file]");
+
 		System.exit(1);
 	}
 	
