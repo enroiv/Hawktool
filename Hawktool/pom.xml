@@ -3,13 +3,7 @@
   <groupId>Hawktool</groupId>
   <artifactId>Hawktool</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <!-- <dependencies>
-  	<dependency>
-  	<groupId>org.slf4j</groupId>
-  	<artifactId>slf4j-log4j12</artifactId>
-  	<version>1.7.25</version>
-  </dependency>
-  </dependencies>-->
+  <packaging>jar</packaging>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
@@ -19,6 +13,28 @@
         <configuration>
           <source>1.7</source>
           <target>1.7</target>
+        </configuration>
+      </plugin>
+      <plugin>
+      	<groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+        	<execution>
+        		<phase>package</phase>
+        		<goals>
+        			<goal>single</goal>
+        		</goals>
+        	</execution>
+        </executions>
+        <configuration>
+        	<archive>
+        		<manifest>
+        			<mainClass>com.enro.htool.main.HRBDispatcher</mainClass>
+        		</manifest>
+        	</archive>
+          <descriptorRefs>
+          	<descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
         </configuration>
       </plugin>
     </plugins>
