@@ -6,10 +6,12 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -21,6 +23,7 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamReader;
 
 import com.enro.bwutils.BWUtils;
+import com.enro.htool.main.RBTemplate;
 
 public class HToolUtil {
 	
@@ -238,6 +241,60 @@ public class HToolUtil {
 		}
 		
 		return sslProps;
+	}
+
+	public static List<RBTemplate> readTemplates(String templatePath, String microAgent,
+			Properties microAgentProps) {
+		
+		List<RBTemplate> templates = new ArrayList<RBTemplate>();
+		BufferedReader br = null;
+		final String pfx = microAgentProps.getProperty("prefix").toLowerCase()+".";
+		
+		try{
+			
+			File folder = new File(templatePath);
+			File[] files = folder.listFiles(new FilenameFilter() {
+			    public boolean accept(File dir, String name) {
+			        return name.toLowerCase().endsWith(".hrb") &&
+			        		name.toLowerCase().startsWith(pfx);
+			    }
+			});
+			
+			if(null!=files && files.length>0){
+				logger.log(Level.FINE,files.length + " rulebases were found");
+				
+				for(File file : files){
+					
+					FileReader fr = new FileReader(file);
+					StringBuilder sb = new StringBuilder();
+					
+					XMLStreamReader xmlSR = XMLInputFactory.newInstance().createXMLStreamReader(fr);
+					String encoding = xmlSR.getCharacterEncodingScheme();
+					logger.log(Level.CONFIG,"Rulebase "+ file.getName() +" reported encoding as: " + encoding);
+					
+					br = new BufferedReader(new InputStreamReader(new FileInputStream(file),encoding));
+					
+					String sCurrentLine = br.readLine();
+					while (sCurrentLine != null) {
+			            sb.append(sCurrentLine);
+			            sCurrentLine = br.readLine();
+			        }
+					br.close();
+					
+					RBTemplate rbt = new RBTemplate(microAgent,BWUtils.strReplace(BWUtils.strReplace(file.getName(),"\\.[hH][rR][bB]$",""), pfx, ""),
+							sb.toString(),
+							microAgentProps);
+					templates.add(rbt);
+				}
+			}
+		} catch(ArrayIndexOutOfBoundsException ee){
+			logger.log(Level.SEVERE,"Unable to read from templates directory!!");
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+		
+		return templates;
+		
 	}
 	
 }
