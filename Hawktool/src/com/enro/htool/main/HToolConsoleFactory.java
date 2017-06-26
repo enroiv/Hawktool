@@ -27,9 +27,14 @@ public class HToolConsoleFactory {
 		} else {
 			props.putAll(reader.getSection(transport));
 			
+			// In case SSL was specified, attempt to read it
+			props.putAll(reader.getSection("SSL"));
+			
 			Hashtable <String,String> sslProps = HToolUtil.processSSLProperties(props);
     		
-    		if(sslProps.size() > 0){
+			boolean hasSSL = (sslProps.size() > 0);
+    		if(hasSSL){
+    			logger.info((hasSSL ? "" : "No ") + "SSL details were loaded.");
     			props.put(HawkConstants.HAWK_SSL_PARAMS, sslProps);
     		}
 		}
