@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
@@ -33,7 +34,7 @@ import COM.TIBCO.hawk.talon.MicroAgentID;
  * 5. The console invokes Dispatcher methods to send Rulebases to appropriate MicroAgents.
  * 6. Finalize console and finish the program.
  */
-public class HRBDispatcher implements Dispatcher,Runnable{
+public class HRBDispatcher implements Dispatcher{
 	
 	private NuHToolConsole console;
 	private String domain;
@@ -41,6 +42,31 @@ public class HRBDispatcher implements Dispatcher,Runnable{
 	private List<RBTemplate> templates = new ArrayList<RBTemplate>();
 	private List<AgentDetail> agents = new ArrayList<AgentDetail>();
 	private int interval = 30000;
+	
+	private class InnerProc implements Runnable{
+		
+		private RBTemplate r;
+		private MicroAgentID maid;
+		private AgentDetail ad;
+		private List<AgentDetail> ads;
+		
+		public InnerProc(RBTemplate r, MicroAgentID maid, AgentDetail ad,List<AgentDetail> ads){
+			this.r=r;
+			this.maid = maid;
+			this.ad = ad;
+			this.ads = ads;
+		}
+
+		@Override
+		public void run() {
+			try{
+				processRulebase(r,maid,ad,ads);
+			} catch (Exception e){
+				logger.error(e.getMessage());
+			} 
+		}
+		
+	}
 
 	public HRBDispatcher(NuHToolConsole console, String domain) {
 		this.console = console;
@@ -206,7 +232,10 @@ public class HRBDispatcher implements Dispatcher,Runnable{
 	private void dispatch(){
 		
 		// Iterate through each agent that was discovered in the environment
-		for(AgentDetail agentDetail : agents){
+		Iterator<AgentDetail> it = agents.iterator();
+		while(it.hasNext()){
+			AgentDetail agentDetail = it.next();
+			
 			logger.info("Processing " + agentDetail.getAgentInstance().getAgentID().getName() + "'s MicroAgents");
 			
 			// Iterate through each template that was loaded
@@ -222,27 +251,14 @@ public class HRBDispatcher implements Dispatcher,Runnable{
 					
 					if(magName.contains(rulebaseTarget)){
 						logger.debug(r + " matches. Rulebase will be sent to " + magName);
-						processRulebase(r,maid,agentDetail,(rulebaseTarget.contentEquals(HToolConstants.HEMANM)) ? agents : null);
+						
+						Thread t = new Thread(new InnerProc(r,maid,agentDetail,(rulebaseTarget.contentEquals(HToolConstants.HEMANM)) ? agents : null));
+						t.start();
 					}
 				}
 			}
-		}
-	}
-
-	@Override
-	public void run() {
-
-		try{
-			this.console.start();
-			Thread.sleep(interval);
-			dispatch();
-		} catch(InterruptedException ie){
-			logger.info("Ending now.");
-		} catch (Exception e) {
-			e.printStackTrace();
-			logger.error(e.getMessage());
-		} finally{	
-			this.console.end();
+			
+			agents.remove(agentDetail);
 		}
 	}
 
@@ -254,6 +270,29 @@ public class HRBDispatcher implements Dispatcher,Runnable{
 	public void setInterval(int interval){
 		this.interval = interval;
 	}
+	
+	public void start(){
+		try{
+			this.console.start();
+			Thread.sleep(interval);
+			dispatch();
+		} catch(InterruptedException ie){
+			logger.info("Ending now.");
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error(e.getMessage());
+		} finally{
+			do{
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					logger.error(e.getMessage());
+				}
+			} while(!agents.isEmpty());
+			this.console.end();
+		}
+	}
+	
 	public static void main(String [] args){
 		
 		if(args.length != 1 ) showUsage();
@@ -267,9 +306,8 @@ public class HRBDispatcher implements Dispatcher,Runnable{
 			console.addDispatcher(dispatcher);
 			
 			dispatcher.readTemplates(reader);
+			dispatcher.start();
 			
-			Thread t = new Thread(dispatcher);
-			t.start();
 		} catch(IOException ioe){
 			ioe.printStackTrace();
 			logger.error(ioe.getMessage());
