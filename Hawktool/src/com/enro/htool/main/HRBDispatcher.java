@@ -42,6 +42,7 @@ public class HRBDispatcher implements Dispatcher{
 	private List<RBTemplate> templates = new ArrayList<RBTemplate>();
 	private List<AgentDetail> agents = new ArrayList<AgentDetail>();
 	private int interval = 30000;
+	private int numAgts = 0;
 	
 	private class InnerProc implements Runnable{
 		
@@ -231,6 +232,8 @@ public class HRBDispatcher implements Dispatcher{
 	
 	private void dispatch(){
 		
+		numAgts = agents.size();
+		
 		// Iterate through each agent that was discovered in the environment
 		Iterator<AgentDetail> it = agents.iterator();
 		while(it.hasNext()){
@@ -258,7 +261,7 @@ public class HRBDispatcher implements Dispatcher{
 				}
 			}
 			
-			agents.remove(agentDetail);
+			numAgts--;
 		}
 	}
 
@@ -288,7 +291,7 @@ public class HRBDispatcher implements Dispatcher{
 				} catch (InterruptedException e) {
 					logger.error(e.getMessage());
 				}
-			} while(!agents.isEmpty());
+			} while(numAgts > 0);
 			this.console.end();
 		}
 	}
