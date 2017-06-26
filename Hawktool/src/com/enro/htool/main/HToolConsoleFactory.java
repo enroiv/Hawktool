@@ -1,11 +1,15 @@
 package com.enro.htool.main;
 
+import java.util.Hashtable;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.enro.htool.common.ConfReader;
+import com.enro.htool.common.HToolUtil;
+
+import COM.TIBCO.hawk.utilities.misc.HawkConstants;
 
 public class HToolConsoleFactory {
 	
@@ -22,6 +26,12 @@ public class HToolConsoleFactory {
 			System.exit(1);
 		} else {
 			props.putAll(reader.getSection(transport));
+			
+			Hashtable <String,String> sslProps = HToolUtil.processSSLProperties(props);
+    		
+    		if(sslProps.size() > 0){
+    			props.put(HawkConstants.HAWK_SSL_PARAMS, sslProps);
+    		}
 		}
 		
 		props.putAll(reader.getSection("Template"));
