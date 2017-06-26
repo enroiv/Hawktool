@@ -259,6 +259,7 @@ public class HRBDispatcher implements Dispatcher,Runnable{
 		if(args.length != 1 ) showUsage();
 		
 		try{
+			logger.info("Dispatching Hawk Rulebases");
 			ConfReader reader = new ConfReader(args[0]);
 			NuHToolConsole console = HToolConsoleFactory.getInstance(reader);
 			HRBDispatcher dispatcher = new HRBDispatcher(console,reader.getString("General","hawk_domain", ""));
