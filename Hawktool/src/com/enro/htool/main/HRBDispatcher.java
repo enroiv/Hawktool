@@ -42,7 +42,11 @@ public class HRBDispatcher implements Dispatcher{
 	private List<RBTemplate> templates = new ArrayList<RBTemplate>();
 	private List<AgentDetail> agents = new ArrayList<AgentDetail>();
 	private int interval = 30000;
-	private int numAgts = 0;
+	private static int numAgts = 0;
+	
+	private static synchronized void decrAgts() {
+		numAgts--;
+	}
 	
 	private class InnerProc implements Runnable{
 		
@@ -62,6 +66,8 @@ public class HRBDispatcher implements Dispatcher{
 		public void run() {
 			try{
 				processRulebase(r,maid,ad,ads);
+				decrAgts();
+				logger.info(numAgts + " agents remaining");
 			} catch (Exception e){
 				logger.error(e.getMessage());
 			} 
@@ -233,6 +239,7 @@ public class HRBDispatcher implements Dispatcher{
 	private void dispatch(){
 		
 		numAgts = agents.size();
+		logger.info(numAgts + " agents remaining");
 		
 		// Iterate through each agent that was discovered in the environment
 		Iterator<AgentDetail> it = agents.iterator();
@@ -260,8 +267,6 @@ public class HRBDispatcher implements Dispatcher{
 					}
 				}
 			}
-			
-			numAgts--;
 		}
 	}
 
