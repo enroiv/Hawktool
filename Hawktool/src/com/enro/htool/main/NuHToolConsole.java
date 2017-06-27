@@ -20,10 +20,12 @@ import COM.TIBCO.hawk.console.hawkeye.MicroAgentListMonitorEvent;
 import COM.TIBCO.hawk.console.hawkeye.MicroAgentListMonitorListener;
 import COM.TIBCO.hawk.console.hawkeye.TIBHawkConsole;
 import COM.TIBCO.hawk.console.hawkeye.TIBHawkConsoleFactory;
+import COM.TIBCO.hawk.talon.DataElement;
 import COM.TIBCO.hawk.talon.MethodInvocation;
 import COM.TIBCO.hawk.talon.MicroAgentData;
 import COM.TIBCO.hawk.talon.MicroAgentException;
 import COM.TIBCO.hawk.talon.MicroAgentID;
+import COM.TIBCO.hawk.talon.TabularData;
 
 public class NuHToolConsole implements AgentMonitorListener,
 MicroAgentListMonitorListener, ErrorExceptionListener{
@@ -83,6 +85,29 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 		AgentManager am = console.getAgentManager();
 		return (am.invoke(maid, mi));
 	}
+	
+	private String[] getServices(MicroAgentID maid) {
+
+		try{
+			DataElement[] dataElements = new DataElement[1];
+			dataElements[0] = new DataElement("Service", "");
+			MethodInvocation mi = new MethodInvocation("getServiceStatus", dataElements);
+			TabularData td = (TabularData) invoke(maid, mi).getData();
+			Object [][] fullTable = td.getAllData();
+			
+			List<String> svcs = new ArrayList<String>();
+			
+			for(int i=0;i<fullTable.length;i++){
+				svcs.add(fullTable[i][0].toString());
+			}
+			
+			return svcs.toArray(new String[svcs.size()]);
+		} catch(Exception ex){
+			logger.error(ex.getMessage());
+		}
+		
+		return null;
+	}
 
 	/*
 	 * (non-Javadoc)
@@ -102,7 +127,11 @@ MicroAgentListMonitorListener, ErrorExceptionListener{
 				continue;
 			}
 			
-			if(maid.getName().contentEquals(HToolConstants.SERVMA)) agentDetail.setSrv(maid);
+			if(maid.getName().contentEquals(HToolConstants.SERVMA)) {
+				agentDetail.setSrv(maid);
+				agentDetail.setServices(getServices(maid));
+			}
+			
 			agentDetail.addMA(maid);
 		}
 		

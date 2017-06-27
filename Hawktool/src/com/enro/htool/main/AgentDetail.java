@@ -12,6 +12,7 @@ public class AgentDetail {
 	private MicroAgentID srv = null;				// Services MicroAgent
 	private MicroAgentID hev = null;				// Hawk Event MicroAgent
 	private List<MicroAgentID> mas = new ArrayList<MicroAgentID>();
+	private String [] services = null;
 	
 	public void addMA(MicroAgentID maid){
 		mas.add(maid);
@@ -51,5 +52,13 @@ public class AgentDetail {
 
 	public void setHev(MicroAgentID hev) {
 		this.hev = hev;
+	}
+
+	public String [] getServices() {
+		return services;
+	}
+
+	public void setServices(String [] services) {
+		this.services = services;
 	}
 }

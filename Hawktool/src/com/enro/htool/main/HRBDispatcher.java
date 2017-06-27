@@ -260,10 +260,36 @@ public class HRBDispatcher implements Dispatcher{
 					String magName = maid.getName();
 					
 					if(magName.contains(rulebaseTarget)){
-						logger.debug(r + " matches. Rulebase will be sent to " + magName);
 						
-						Thread t = new Thread(new InnerProc(r,maid,agentDetail,(rulebaseTarget.contentEquals(HToolConstants.HEMANM)) ? agents : null));
-						t.start();
+						boolean process = true;
+						
+						// For service MicroAgents, the template and the service name have to match
+						if(magName.contains(HToolConstants.SERVMA)){
+							
+							process = false;
+							
+							try{
+								logger.info("Rulebase: "+r.getTmpltID());
+								Properties tmpltProps = r.getTemplateProps();
+								String serviceList = tmpltProps.getProperty("service_list", "");	
+								String [] services = serviceList.split(",");
+				    			
+				    			for(String service : services){
+				    				logger.info("Service: "+service);
+				    				if(service.contains(r.getTmpltID()) && (HToolUtil.filter(agentDetail.getServices(), service).length > 0)){
+				    					process = true;
+				    					logger.info(service + " matches. Rulebase will be sent to " + magName);
+				    					break;
+				    				}    				
+				    			}
+							} catch (Exception e){continue;}
+						}
+						
+						if(process){
+							logger.debug(r + " matches. Rulebase will be sent to " + magName);
+							Thread t = new Thread(new InnerProc(r,maid,agentDetail,(rulebaseTarget.contentEquals(HToolConstants.HEMANM)) ? agents : null));
+							t.start();
+						}
 					}
 				}
 			}
