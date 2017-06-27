@@ -46,12 +46,12 @@ public class HRBDispatcher implements Dispatcher{
 	
 	private static synchronized void decrRem() {
 		numRem--;
-		logger.info("Remaining: " + numRem);
+		logger.debug("Remaining RB's to load: " + numRem);
 	}
 	
 	private static synchronized void incrRem() {
 		numRem++;
-		logger.info("Remaining: " + numRem);
+		logger.debug("Remaining RB's to load: " + numRem);
 	}
 	
 	private class InnerProc implements Runnable{
