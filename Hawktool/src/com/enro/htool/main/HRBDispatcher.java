@@ -42,10 +42,16 @@ public class HRBDispatcher implements Dispatcher{
 	private List<RBTemplate> templates = new ArrayList<RBTemplate>();
 	private List<AgentDetail> agents = new ArrayList<AgentDetail>();
 	private int interval = 30000;
-	private static int numAgts = 0;
+	private static int numRem = 0;
 	
-	private static synchronized void decrAgts() {
-		numAgts--;
+	private static synchronized void decrRem() {
+		numRem--;
+		logger.info("Remaining: " + numRem);
+	}
+	
+	private static synchronized void incrRem() {
+		numRem++;
+		logger.info("Remaining: " + numRem);
 	}
 	
 	private class InnerProc implements Runnable{
@@ -65,9 +71,9 @@ public class HRBDispatcher implements Dispatcher{
 		@Override
 		public void run() {
 			try{
+				incrRem();
 				processRulebase(r,maid,ad,ads);
-				decrAgts();
-				logger.info(numAgts + " agents remaining");
+				decrRem();
 			} catch (Exception e){
 				logger.error(e.getMessage());
 			} 
@@ -238,14 +244,8 @@ public class HRBDispatcher implements Dispatcher{
 	
 	private void dispatch(){
 		
-		numAgts = agents.size();
-		logger.info(numAgts + " agents remaining");
-		
 		// Iterate through each agent that was discovered in the environment
-		Iterator<AgentDetail> it = agents.iterator();
-		while(it.hasNext()){
-			AgentDetail agentDetail = it.next();
-			
+		for(AgentDetail agentDetail : agents){
 			logger.info("Processing " + agentDetail.getAgentInstance().getAgentID().getName() + "'s MicroAgents");
 			
 			// Iterate through each template that was loaded
@@ -292,11 +292,11 @@ public class HRBDispatcher implements Dispatcher{
 		} finally{
 			do{
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(5000);
 				} catch (InterruptedException e) {
 					logger.error(e.getMessage());
 				}
-			} while(numAgts > 0);
+			} while(numRem > 0);
 			this.console.end();
 		}
 	}
