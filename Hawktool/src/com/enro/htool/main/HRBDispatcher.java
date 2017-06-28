@@ -200,7 +200,9 @@ public class HRBDispatcher implements Dispatcher{
 		String deployment = parts[0];
     	String component = parts[1];
     	
-    	String rulebaseName = BWUtils.strReplace(deployment+"_"+component+"_"+r.getTmpltID(),"\\.[hH][rR][bB]$","");
+    	String rulebaseName = BWUtils.strReplace(deployment+"_"+component+"_"+r.getTmpltID()+
+    			(sourceAgent!=null?"_"+sourceAgent:""),"\\.[hH][rR][bB]$","");
+    	
     	logger.info("Generating rulebase <" + rulebaseName + ">");
     	
     	String rulebaseData = replaceInTemplate(deployment,component,sourceAgent,targetAgent,r);
@@ -269,16 +271,16 @@ public class HRBDispatcher implements Dispatcher{
 							process = false;
 							
 							try{
-								logger.info("Rulebase: "+r.getTmpltID());
+								logger.debug("Rulebase: "+r.getTmpltID());
 								Properties tmpltProps = r.getTemplateProps();
 								String serviceList = tmpltProps.getProperty("service_list", "");	
 								String [] services = serviceList.split(",");
 				    			
 				    			for(String service : services){
-				    				logger.info("Service: "+service);
+				    				logger.debug("Service: "+service);
 				    				if(service.contains(r.getTmpltID()) && (HToolUtil.filter(agentDetail.getServices(), service).length > 0)){
 				    					process = true;
-				    					logger.info(service + " matches. Rulebase will be sent to " + magName);
+				    					logger.debug(service + " matches. Rulebase will be sent to " + magName);
 				    					break;
 				    				}    				
 				    			}
